@@ -2,34 +2,35 @@ import json
 import os
 from Services.ImageService import ImageService
 
+
 class FileServices:
     def __init__(self):
-            self.file_name = "History.josn"
             self.temp_folder = "temp"
 
-    def Save_content_to_file(self, data):
+    def Save_content_to_file(self, data, file_name):
         if data is None or len(data) == 0:
             return "Nothing to save"
         try:
-            file_path = os.path.join(os.getcwd(), self.file_name)
+            file_path = os.path.join(os.getcwd(), file_name)
             with open(file_path, 'w') as json_file:
                 json.dump(data, json_file, indent=2)
             print(f"Object successfully saved to {file_path}")
         except IOError as e:
             print(f"Error saving object to {file_path}: {e}")
 
-    def Rehidrate_from_file(self):
+    def Rehidrate_from_file(self, file_name):
         try:
             # Open the file in read mode ('r')
-            with open(self.file_name, 'r') as file:
+            with open(file_name, 'r') as file:
                 # Load JSON data from the file
                 json_data = json.load(file)
                 return json_data
 
         except FileNotFoundError:
-            print(f"Error: File '{self.file_name}' not found.")
+            print(f"Error: File '{file_name}' not found.")
         except json.decoder.JSONDecodeError:
-            print(f"Error: Unable to decode JSON in file '{self.file_name}'. File may be empty or not valid JSON.")
+            print(f"Error: Unable to decode JSON in file '{file_name}'. File may be empty or not valid JSON.")
+
     def Merge_content(self, old_object, new_object):
         if old_object is None and new_object is None:
             return None

@@ -1,8 +1,9 @@
 import customtkinter
 import os
-from Services.ImageService import ImageService
 from main_logic import Main_logic
 from PIL import Image
+from Views.paramView import ParamView
+from context import Context
 
 import webbrowser
 
@@ -10,6 +11,9 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__()
+        self.ctx = Context()  
+        main_logic = Main_logic()
+        self.secondFrame = ParamView(self.ctx)      
 
         params: dict | None = None,      
         self._params         = params
@@ -55,7 +59,7 @@ class App(customtkinter.CTk):
         self.home_frame.grid_columnconfigure(1, weight=1)
         self.home_frame.grid_columnconfigure(2, weight=1)
 
-        main_logic = Main_logic()
+       
         self.finalContent = main_logic.Main()
 
         row_val = 0
@@ -81,6 +85,8 @@ class App(customtkinter.CTk):
         # create second frame
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.select_frame_by_name("home")
+      
+
     def select_frame_by_name(self, name):
         # set button color for selected button
         self.home_button.configure(fg_color=("gray75", "gray25") if name == "home" else "transparent")
@@ -92,7 +98,9 @@ class App(customtkinter.CTk):
         else:
             self.home_frame.grid_forget()
         if name == "frame_2":
-            self.second_frame.grid(row=0, column=1, sticky="nsew")
+            
+            self.secondFrame.init(self.second_frame)
+            #self.second_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.second_frame.grid_forget()
 

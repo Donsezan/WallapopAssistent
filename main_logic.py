@@ -1,6 +1,6 @@
 from Services.GraberServices import GraberServices
-from Services.ImageService import ImageService
 from Services.FileServices import FileServices
+from constants import Constants
 from datetime import datetime 
 
 class Main_logic:
@@ -15,7 +15,7 @@ class Main_logic:
        
         sorted_objects = []
 
-        self.loaded_contnet = file_services_instance.Rehidrate_from_file()
+        self.loaded_contnet = file_services_instance.Rehidrate_from_file(Constants.History_file_name)
         self.loaded_contnet = self.delete_old_records_in_histry(self.loaded_contnet, self.max_history_days)
         self.loaded_contnet_exist = False
         if self.loaded_contnet is not None and len(self.loaded_contnet) != 0:    
@@ -52,7 +52,7 @@ class Main_logic:
       
 
         self.finalContent = file_services_instance.Merge_content(self.loaded_contnet, self.new_content_array)
-        file_services_instance.Save_content_to_file(self.finalContent)
+        file_services_instance.Save_content_to_file(self.finalContent, Constants.History_file_name)
 
         file_services_instance.Delete_old_files(self.finalContent)
         file_services_instance.Download_missed_photos(self.finalContent)
