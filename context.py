@@ -3,6 +3,9 @@ class Context:
     content_search_checBox = str
     content_search_text = str
     refresh_result = int
+    price_filter_checkbox = str
+    price_limit_from = int
+    price_limit_to = int
 
     @classmethod
     def get_search_text(cls):
@@ -35,3 +38,27 @@ class Context:
     @classmethod
     def set_refresh_result(cls, value):
         cls.refresh_result = value
+
+    @classmethod
+    def get_price_filter_checkbox(cls):
+        return cls.price_filter_checkbox
+    
+    @classmethod
+    def set_price_filter_checkbox(cls, value):
+        cls.price_filter_checkbox = value
+
+    @classmethod
+    def get_price_limit_from(cls):
+        return cls.price_limit_from
+    
+    @classmethod
+    def set_price_limit_from(cls, value):
+        cls.price_limit_from = value
+
+    @classmethod
+    def get_price_limit_to(cls):
+        return cls.price_limit_to
+    
+    @classmethod
+    def set_price_limit_to(cls, value):
+        cls.price_limit_to = value
