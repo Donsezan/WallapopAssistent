@@ -1,11 +1,13 @@
 class Context:
     search_text = str
     content_search_checBox = str
-    content_search_text = str
-    refresh_result = int
+    content_search_text = str   
     price_filter_checkbox = str
     price_limit_from = int
     price_limit_to = int
+    notification_toastup_checkbox = str
+    notification_soundnote_checkbox = str
+    refresh_result = int
 
     @classmethod
     def get_search_text(cls):
@@ -62,3 +64,19 @@ class Context:
     @classmethod
     def set_price_limit_to(cls, value):
         cls.price_limit_to = value
+    
+    @classmethod
+    def get_notification_toastup_checkbox(cls):
+        return cls.notification_toastup_checkbox
+    
+    @classmethod
+    def set_notification_toastup_checkbox(cls, value):
+        cls.notification_toastup_checkbox = value
+
+    @classmethod
+    def get_notification_soundnote_checkbox(cls):
+        return cls.notification_soundnote_checkbox
+    
+    @classmethod
+    def set_notification_soundnote_checkbox(cls, value):
+        cls.notification_soundnote_checkbox = value
