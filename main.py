@@ -12,8 +12,8 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.ctx = Context()  
-        main_logic = Main_logic()
-        self.secondFrame = ParamView(self.ctx)      
+        main_logic = Main_logic(self.ctx)
+        self.secondFrame = ParamView(self.ctx)  
 
         params: dict | None = None,      
         self._params         = params
@@ -60,7 +60,7 @@ class App(customtkinter.CTk):
         self.home_frame.grid_columnconfigure(2, weight=1)
 
        
-        self.finalContent = main_logic.Main()
+        self.finalContent = main_logic.Init()
 
         row_val = 0
         col_val = 0
@@ -111,6 +111,7 @@ class App(customtkinter.CTk):
         self.select_frame_by_name("frame_2")
     def button_event(self, url):
         webbrowser.open_new(url)
+        
 if __name__ == "__main__":
     app = App()
     app.mainloop()

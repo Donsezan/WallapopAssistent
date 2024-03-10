@@ -4,14 +4,17 @@ from constants import Constants
 from datetime import datetime 
 
 class Main_logic:
-    def __init__(self):
+    def __init__(self, ctx):
+        self.ctx = ctx
         self.max_history_days = 5 
         self.target_list = ["NUC","Latitude", "thinkpad", "Dell", "x390", "HP"]
 
-    def Main(self):
-     
+    def Init(self):     
         file_services_instance = FileServices()
         graberServices_instance = GraberServices()
+
+        self.ctx.rehydrate_json(file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))
+
        
         sorted_objects = []
 

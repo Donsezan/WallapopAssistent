@@ -1,4 +1,4 @@
-import json
+from helper import Helper
 
 class Context:
     search_text = str
@@ -83,37 +83,39 @@ class Context:
     def set_notification_soundnote_checkbox(cls, value):
         cls.notification_soundnote_checkbox = value
 
-    def to_json(self):
+    def to_json(cls):
         return {
-            "search_text": self.remove_newline_symbol(self.search_text),
-            "content_search_checBox": self.content_search_checBox,
-            "content_search_text": self.remove_newline_symbol(self.content_search_text),
-            "price_filter_checkbox": self.price_filter_checkbox,
-            "price_limit_from": self.remove_newline_symbol(self.price_limit_from),
-            "price_limit_to": self.remove_newline_symbol(self.price_limit_to),
-            "notification_toastup_checkbox": self.notification_toastup_checkbox,
-            "notification_soundnote_checkbox": self.notification_soundnote_checkbox,
-            "refresh_result": self.remove_newline_symbol(self.refresh_result)
+            "search_text": Helper.remove_newline_symbol(cls.get_search_text()),
+            "content_search_checBox": cls.get_content_search_checkBox(),
+            "content_search_text": Helper.remove_newline_symbol(cls.get_content_search_text()),
+            "price_filter_checkbox": cls.get_price_filter_checkbox(),
+            "price_limit_from": Helper.remove_newline_symbol(cls.get_price_limit_from()),
+            "price_limit_to": Helper.remove_newline_symbol(cls.get_price_limit_to()),
+            "notification_toastup_checkbox": cls.get_notification_toastup_checkbox(),
+            "notification_soundnote_checkbox": cls.get_notification_soundnote_checkbox(),
+            "refresh_result": Helper.remove_newline_symbol(cls.get_refresh_result())
         }
 
     @classmethod
-    def from_json(cls, json_str):
-        data = json.loads(json_str)
-        instance = cls()
-        instance.search_text = data["search_text"]
-        instance.content_search_checBox = data["content_search_checBox"]
-        instance.content_search_text = data["content_search_text"]
-        instance.price_filter_checkbox = data["price_filter_checkbox"]
-        instance.price_limit_from = data["price_limit_from"]
-        instance.price_limit_to = data["price_limit_to"]
-        instance.notification_toastup_checkbox = data["notification_toastup_checkbox"]
-        instance.notification_soundnote_checkbox = data["notification_soundnote_checkbox"]
-        instance.refresh_result = data["refresh_result"]
-        return instance
+    def rehydrate_json(cls, data):
+        #data = json.loads(json_str)   
+        cls.set_search_text(cls.get_parameter(data, "default_search_text", "None"))
+        cls.set_content_search_checkBox(cls.get_parameter(data,"content_search_checBox", "disabled"))
+        cls.set_content_search_text(cls.get_parameter(data, "content_search_text", "None"))
+        cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", "disabled"))
+        cls.set_price_limit_from(cls.get_parameter(data, "price_limit_from", 0)) 
+        cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 0))  
+        cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", "disabled"))
+        cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", "disabled"))
+        cls.set_refresh_result(cls.get_parameter(data, "refresh_result", 60)) 
+
     
-    def remove_newline_symbol(self, input):
-        output = input
-        symbol = "\n"
-        if input.endswith(symbol):       
-            output = input[:-len(symbol)]
-        return output
+    def get_parameter(data, key, default):
+        result = default
+        if data is not None: 
+            try:
+                result = data.get(key, default)
+            except KeyError as e:
+                print(f"KeyError: {e}")
+        return result
+        

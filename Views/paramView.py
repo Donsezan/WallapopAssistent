@@ -1,6 +1,7 @@
 import customtkinter
 from constants import Constants
 from Services.FileServices import FileServices
+from helper import Helper
 
 class ParamView:
     def __init__(self, ctx):
@@ -10,8 +11,8 @@ class ParamView:
 
     def init(self, root):
         self.rootFrame = root   
-        self.content_fileter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_content_search_checkBox())
-        self.price_filter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_price_filter_checkbox())
+        self.content_fileter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_content_search_checkBox())       
+        self.price_filter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_price_filter_checkbox())      
         self.notification_toastup_checkbox_var = customtkinter.StringVar(value=self.ctx.get_notification_toastup_checkbox())
         self.notification_soundnote_checkbox_var = customtkinter.StringVar(value=self.ctx.get_notification_soundnote_checkbox())
         self.rootFrame.grid(row=0, column=1, rowspan=1, sticky="nsew")
@@ -34,7 +35,7 @@ class ParamView:
         #Content filters checkbox
         content_checkBox_row = 1
         self.rootFrame.content_checkBox = customtkinter.CTkCheckBox(self.rootFrame, text="Content filter", command=self.content_fileter_checkbox_event, variable=self.content_fileter_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
-        self.rootFrame.content_checkBox.grid(row=content_checkBox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)           
+        self.rootFrame.content_checkBox.grid(row=content_checkBox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)        
         
         #Content filters row
         content_fileter_row = 2
@@ -44,6 +45,7 @@ class ParamView:
         self.rootFrame.content_fileter_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
         self.rootFrame.content_fileter_textbox.grid(row=content_fileter_row, column=1, sticky="nsew",padx=5, pady=5, columnspan=3)              
         self.rootFrame.content_fileter_textbox.insert("0.0", self.ctx.get_content_search_text() )
+        self.content_fileter_checkbox_event()   
 
         #Price filter checkbox
         price_filter_checkbox_row = 3
@@ -65,6 +67,7 @@ class ParamView:
         self.rootFrame.price_limit_to_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False  )
         self.rootFrame.price_limit_to_textbox.grid(row=price_limit_row, column=3, sticky="nsew",padx=5, pady=5)              
         self.rootFrame.price_limit_to_textbox.insert("0.0", self.ctx.get_price_limit_to() )
+        self.price_filter_checkbox_event()
 
         #Refresh time row
         refresh_time_row = 5
@@ -72,8 +75,8 @@ class ParamView:
         self.rootFrame.refresh_time_label.grid(row=refresh_time_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
         
         self.rootFrame.refresh_time_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
-        self.rootFrame.refresh_time_textbox.grid(row=refresh_time_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3)              
-        self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.get_refresh_result() )
+        self.rootFrame.refresh_time_textbox.grid(row=refresh_time_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3) 
+        self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.get_refresh_result() )   
 
         #Notification toast-up checkbox
         notification_toastup_checkbox_row = 6
@@ -91,6 +94,9 @@ class ParamView:
         self.rootFrame.save_button.grid(row=save_button_row, column=0, sticky="nsew",padx=10, pady=10, columnspan=4)
 
     def linkField_event(self):
+        if not self.is_valid_digit_fields():
+            return
+
         self.ctx.set_search_text(self.rootFrame.main_filter_textbox.get("0.0", "end"))
         self.ctx.set_content_search_checkBox(self.content_fileter_checkbox_var.get())
         if self.content_fileter_checkbox_var.get() == customtkinter.NORMAL:
@@ -102,8 +108,9 @@ class ParamView:
             self.ctx.set_price_limit_to(self.rootFrame.price_limit_to_textbox.get("0.0", "end"))
               
         self.ctx.set_notification_toastup_checkbox(self.notification_toastup_checkbox_var.get())
-        self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())
+        self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
         self.ctx.set_refresh_result(self.rootFrame.refresh_time_textbox.get("0.0", "end"))
+      
 
         print("search_text:", self.ctx.get_search_text())
         print("content_search_checBox:", self.ctx.get_content_search_checkBox())
@@ -135,4 +142,28 @@ class ParamView:
             self.rootFrame.price_limit_from_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
             self.rootFrame.price_limit_to_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
             print("price_filter_checkbox_event: ", customtkinter.DISABLED)
+    
+    def validate_int(self, textbox):
+        value = Helper.remove_newline_symbol(textbox.get("0.0", "end"))
+        print(textbox.cget("fg_color"))
+        if value.isdigit():
+            textbox.configure(state = customtkinter.NORMAL, fg_color= ['#F9F9FA', '#1D1E1E'])   
+            return True
+        else:       
+            textbox.configure(state = customtkinter.NORMAL, fg_color= "red")   
+            return False
         
+    def is_valid_digit_fields(self):
+        if self.price_filter_checkbox_var.get() == customtkinter.NORMAL:
+            if not (self.validate_int(self.rootFrame.price_limit_from_textbox) and self.validate_int(self.rootFrame.price_limit_to_textbox)):
+                return False
+        
+        if not self.validate_int(self.rootFrame.refresh_time_textbox):
+            return False
+        
+        return True
+                
+                         
+
+
+    
