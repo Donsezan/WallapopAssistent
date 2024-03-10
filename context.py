@@ -1,3 +1,5 @@
+import json
+
 class Context:
     search_text = str
     content_search_checBox = str
@@ -80,3 +82,38 @@ class Context:
     @classmethod
     def set_notification_soundnote_checkbox(cls, value):
         cls.notification_soundnote_checkbox = value
+
+    def to_json(self):
+        return {
+            "search_text": self.remove_newline_symbol(self.search_text),
+            "content_search_checBox": self.content_search_checBox,
+            "content_search_text": self.remove_newline_symbol(self.content_search_text),
+            "price_filter_checkbox": self.price_filter_checkbox,
+            "price_limit_from": self.remove_newline_symbol(self.price_limit_from),
+            "price_limit_to": self.remove_newline_symbol(self.price_limit_to),
+            "notification_toastup_checkbox": self.notification_toastup_checkbox,
+            "notification_soundnote_checkbox": self.notification_soundnote_checkbox,
+            "refresh_result": self.remove_newline_symbol(self.refresh_result)
+        }
+
+    @classmethod
+    def from_json(cls, json_str):
+        data = json.loads(json_str)
+        instance = cls()
+        instance.search_text = data["search_text"]
+        instance.content_search_checBox = data["content_search_checBox"]
+        instance.content_search_text = data["content_search_text"]
+        instance.price_filter_checkbox = data["price_filter_checkbox"]
+        instance.price_limit_from = data["price_limit_from"]
+        instance.price_limit_to = data["price_limit_to"]
+        instance.notification_toastup_checkbox = data["notification_toastup_checkbox"]
+        instance.notification_soundnote_checkbox = data["notification_soundnote_checkbox"]
+        instance.refresh_result = data["refresh_result"]
+        return instance
+    
+    def remove_newline_symbol(self, input):
+        output = input
+        symbol = "\n"
+        if input.endswith(symbol):       
+            output = input[:-len(symbol)]
+        return output

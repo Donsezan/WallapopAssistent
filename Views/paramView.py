@@ -1,9 +1,12 @@
 import customtkinter
+from constants import Constants
+from Services.FileServices import FileServices
 
 class ParamView:
     def __init__(self, ctx):
         self.ctx = ctx
         self.rootFrame = object        
+        self.file_services_instance = FileServices()
 
     def init(self, root):
         self.rootFrame = root   
@@ -109,9 +112,9 @@ class ParamView:
         print("price_limit_from:", self.ctx.get_price_limit_from())
         print("price_limit_to:", self.ctx.get_price_limit_to())
         print("notification_toastup_checkbox:", self.ctx.get_price_limit_to())
-        print("notification_soundnote_checkbox:", self.ctx.get_price_limit_to())
-        
+        print("notification_soundnote_checkbox:", self.ctx.get_price_limit_to())        
         print("set_refresh_result:", self.ctx.get_refresh_result())
+        self.file_services_instance.Save_content_to_file(self.ctx.to_json(), Constants.Parameters_file_name)
 
     def content_fileter_checkbox_event(self):
         if self.content_fileter_checkbox_var.get() == customtkinter.NORMAL:
