@@ -77,19 +77,28 @@ class ParamView:
         self.rootFrame.refresh_time_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
         self.rootFrame.refresh_time_textbox.grid(row=refresh_time_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3) 
         self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.get_refresh_result() )   
+       
+        #History diggind days row
+        history_diggind_days_row = 6
+        self.rootFrame.history_diggind_days_label = customtkinter.CTkLabel(self.rootFrame, text="History diggind days", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
+        self.rootFrame.history_diggind_days_label.grid(row=history_diggind_days_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
+        
+        self.rootFrame.history_diggind_days_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
+        self.rootFrame.history_diggind_days_textbox.grid(row=history_diggind_days_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3) 
+        self.rootFrame.history_diggind_days_textbox.insert("0.0", self.ctx.get_history_diggind_days() )  
 
         #Notification toast-up checkbox
-        notification_toastup_checkbox_row = 6
+        notification_toastup_checkbox_row = 7
         self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)   
 
         #Notification sound note checkbox
-        notification_soundnote_checkbox_row = 7
+        notification_soundnote_checkbox_row = 8
         self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)       
 
         #Save button
-        save_button_row = 8
+        save_button_row = 9
         self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save", width=30, height=20,  command=self.linkField_event)
         self.rootFrame.save_button.grid(row=save_button_row, column=0, sticky="nsew",padx=10, pady=10, columnspan=4)
 
@@ -107,6 +116,7 @@ class ParamView:
             self.ctx.set_price_limit_from(self.rootFrame.price_limit_from_textbox.get("0.0", "end"))
             self.ctx.set_price_limit_to(self.rootFrame.price_limit_to_textbox.get("0.0", "end"))
               
+        self.ctx.set_history_diggind_days(self.rootFrame.history_diggind_days_textbox.get("0.0", "end"))
         self.ctx.set_notification_toastup_checkbox(self.notification_toastup_checkbox_var.get())
         self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
         self.ctx.set_refresh_result(self.rootFrame.refresh_time_textbox.get("0.0", "end"))
@@ -118,6 +128,7 @@ class ParamView:
         print("price_filter_checkbox_var:", self.ctx.get_price_filter_checkbox())
         print("price_limit_from:", self.ctx.get_price_limit_from())
         print("price_limit_to:", self.ctx.get_price_limit_to())
+        print("set_history_diggind_days:", self.ctx.get_history_diggind_days())
         print("notification_toastup_checkbox:", self.ctx.get_price_limit_to())
         print("notification_soundnote_checkbox:", self.ctx.get_price_limit_to())        
         print("set_refresh_result:", self.ctx.get_refresh_result())

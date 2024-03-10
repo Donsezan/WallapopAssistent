@@ -7,6 +7,7 @@ class Context:
     price_filter_checkbox = str
     price_limit_from = int
     price_limit_to = int
+    history_diggind_days = int
     notification_toastup_checkbox = str
     notification_soundnote_checkbox = str
     refresh_result = int
@@ -66,6 +67,14 @@ class Context:
     @classmethod
     def set_price_limit_to(cls, value):
         cls.price_limit_to = value
+
+    @classmethod
+    def get_history_diggind_days(cls):
+        return cls.history_diggind_days
+    
+    @classmethod
+    def set_history_diggind_days(cls, value):
+        cls.history_diggind_days = value
     
     @classmethod
     def get_notification_toastup_checkbox(cls):
@@ -91,6 +100,7 @@ class Context:
             "price_filter_checkbox": cls.get_price_filter_checkbox(),
             "price_limit_from": Helper.remove_newline_symbol(cls.get_price_limit_from()),
             "price_limit_to": Helper.remove_newline_symbol(cls.get_price_limit_to()),
+            "history_diggind_days": Helper.remove_newline_symbol(cls.get_history_diggind_days()),
             "notification_toastup_checkbox": cls.get_notification_toastup_checkbox(),
             "notification_soundnote_checkbox": cls.get_notification_soundnote_checkbox(),
             "refresh_result": Helper.remove_newline_symbol(cls.get_refresh_result())
@@ -105,6 +115,7 @@ class Context:
         cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", "disabled"))
         cls.set_price_limit_from(cls.get_parameter(data, "price_limit_from", 0)) 
         cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 0))  
+        cls.set_history_diggind_days(cls.get_parameter(data, "history_diggind_days", 0))  
         cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", "disabled"))
         cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", "disabled"))
         cls.set_refresh_result(cls.get_parameter(data, "refresh_result", 60)) 
