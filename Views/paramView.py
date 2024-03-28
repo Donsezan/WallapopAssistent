@@ -34,7 +34,7 @@ class ParamView:
     
         #Content filters checkbox
         content_checkBox_row = 1
-        self.rootFrame.content_checkBox = customtkinter.CTkCheckBox(self.rootFrame, text="Content filter", command=self.content_fileter_checkbox_event, variable=self.content_fileter_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
+        self.rootFrame.content_checkBox = customtkinter.CTkCheckBox(self.rootFrame, text="Content filter", command=self.content_fileter_checkbox_event, variable=self.content_fileter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.content_checkBox.grid(row=content_checkBox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)        
         
         #Content filters row
@@ -49,7 +49,7 @@ class ParamView:
 
         #Price filter checkbox
         price_filter_checkbox_row = 3
-        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Price filter", command=self.price_filter_checkbox_event, variable=self.price_filter_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
+        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Price filter", command=self.price_filter_checkbox_event, variable=self.price_filter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=price_filter_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)         
 
         #Price limit
@@ -57,7 +57,7 @@ class ParamView:
         self.rootFrame.price_limit_from_label = customtkinter.CTkLabel(self.rootFrame, text="Price From", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
         self.rootFrame.price_limit_from_label.grid(row=price_limit_row, column=0, sticky="nsew", padx=5, pady=5)            
         
-        self.rootFrame.price_limit_from_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False, width=100)
+        self.rootFrame.price_limit_from_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False, width=80)
         self.rootFrame.price_limit_from_textbox.grid(row=price_limit_row, column=1, sticky="nsew",padx=5, pady=5)              
         self.rootFrame.price_limit_from_textbox.insert("0.0", self.ctx.get_price_limit_from() )
 
@@ -71,7 +71,7 @@ class ParamView:
 
         #Refresh time row
         refresh_time_row = 5
-        self.rootFrame.refresh_time_label = customtkinter.CTkLabel(self.rootFrame, text="Refresh time", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
+        self.rootFrame.refresh_time_label = customtkinter.CTkLabel(self.rootFrame, text="Refresh time sec", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
         self.rootFrame.refresh_time_label.grid(row=refresh_time_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
         
         self.rootFrame.refresh_time_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
@@ -89,12 +89,12 @@ class ParamView:
 
         #Notification toast-up checkbox
         notification_toastup_checkbox_row = 7
-        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
+        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)   
 
         #Notification sound note checkbox
         notification_soundnote_checkbox_row = 8
-        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.DISABLED, offvalue=customtkinter.NORMAL)
+        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)       
 
         #Save button
@@ -135,24 +135,24 @@ class ParamView:
         self.file_services_instance.Save_content_to_file(self.ctx.to_json(), Constants.Parameters_file_name)
 
     def content_fileter_checkbox_event(self):
-        if self.content_fileter_checkbox_var.get() == customtkinter.NORMAL:
+        if self.content_fileter_checkbox_var.get() == customtkinter.ACTIVE:
             self.rootFrame.content_fileter_textbox.configure(state = customtkinter.NORMAL, text_color= "White")   
             #self.rootFrame.content_fileter_button.configure(state = customtkinter.NORMAL, fg_color=['#3B8ED0', '#1F6AA5'])
-            print("content_fileter_checkbox_event: ", customtkinter.NORMAL)
+            print("content_fileter_checkbox_event: ", customtkinter.ACTIVE)
         else:
             self.rootFrame.content_fileter_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
             #self.rootFrame.content_fileter_button.configure(state = customtkinter.DISABLED, fg_color= "gray30") 
-            print("content_fileter_checkbox_event: ", customtkinter.DISABLED)
+            print("content_fileter_checkbox_event: ", customtkinter.NORMAL)
 
     def price_filter_checkbox_event(self):
-        if self.price_filter_checkbox_var.get() == customtkinter.NORMAL:
+        if self.price_filter_checkbox_var.get() == customtkinter.ACTIVE:
             self.rootFrame.price_limit_from_textbox.configure(state = customtkinter.NORMAL, text_color= "White")   
             self.rootFrame.price_limit_to_textbox.configure(state = customtkinter.NORMAL, text_color= "White")   
-            print("price_filter_checkbox_event: ", customtkinter.NORMAL)
+            print("price_filter_checkbox_event: ", customtkinter.ACTIVE)
         else:
             self.rootFrame.price_limit_from_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
             self.rootFrame.price_limit_to_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
-            print("price_filter_checkbox_event: ", customtkinter.DISABLED)
+            print("price_filter_checkbox_event: ", customtkinter.NORMAL)
     
     def validate_int(self, textbox):
         value = Helper.remove_newline_symbol(textbox.get("0.0", "end"))
