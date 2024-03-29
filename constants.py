@@ -4,3 +4,6 @@ class Constants:
     SearchString_Siparator = ','
     CheackBox_enabled_status = "active"
     Direct_search_path = "https://api.wallapop.com/api/v3/general/search"    
+    class SearchType:
+        Direct_search = 0
+        History_search = 1

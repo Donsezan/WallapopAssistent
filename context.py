@@ -1,6 +1,8 @@
 from helper import Helper
+from constants import Constants
 
 class Context:
+    search_type = int
     search_text = str
     content_filter_checBox = str
     content_filter_text = str   
@@ -11,6 +13,14 @@ class Context:
     notification_toastup_checkbox = str
     notification_soundnote_checkbox = str
     refresh_result = int
+
+    @classmethod
+    def get_search_type(cls):
+        return int(cls.search_type)
+    
+    @classmethod
+    def set_search_type(cls, value):
+        cls.search_type = value
 
     @classmethod
     def get_search_text(cls):
@@ -94,6 +104,7 @@ class Context:
 
     def to_json(cls):
         return {
+            "search_type": Helper.remove_newline_symbol(cls.get_search_type()),            
             "search_text": Helper.remove_newline_symbol(cls.get_search_text()),
             "content_filter_checBox": cls.get_content_filter_checkBox(),
             "content_filter_text": Helper.remove_newline_symbol(cls.get_content_filter_text()),
@@ -109,6 +120,7 @@ class Context:
     @classmethod
     def rehydrate_json(cls, data):
         #data = json.loads(json_str)   
+        cls.set_search_type(cls.get_parameter(data, "search_type", Constants.SearchType.Direct_search))
         cls.set_search_text(cls.get_parameter(data, "search_text", "None"))
         cls.set_content_filter_checkBox(cls.get_parameter(data,"content_filter_checBox", "disabled"))
         cls.set_content_filter_text(cls.get_parameter(data, "content_filter_text", "None"))

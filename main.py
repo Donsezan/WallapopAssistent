@@ -37,7 +37,7 @@ class App(customtkinter.CTk):
         # create navigation frame
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
-        self.navigation_frame.grid_rowconfigure(4, weight=1)
+        self.navigation_frame.grid_rowconfigure(3, weight=1)
 
         self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text=" ", image=self.logo_image,
                                                              compound="left", font=customtkinter.CTkFont(size=15, weight="bold"))
@@ -52,6 +52,10 @@ class App(customtkinter.CTk):
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                       image=self.chat_image, anchor="w", command=self.frame_2_button_event)
         self.frame_2_button.grid(row=2, column=0, sticky="ew")
+
+        self.refresh_button = customtkinter.CTkButton(self.navigation_frame, text="Refresh", width=30, height=40, command=self.refresh_button_event)
+        self.refresh_button.grid(row=4, column=0, sticky="nsew",padx=20, pady=20)
+
 
         # create home frame  
         self.home_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
@@ -110,8 +114,12 @@ class App(customtkinter.CTk):
 
     def frame_2_button_event(self):
         self.select_frame_by_name("frame_2")
+
     def button_event(self, url):
         webbrowser.open_new(url)
+        
+    def refresh_button_event(self):
+        print("refresh")
         
 if __name__ == "__main__":
     app = App()

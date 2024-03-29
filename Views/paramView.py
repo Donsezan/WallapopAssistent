@@ -16,6 +16,7 @@ class ParamView:
 
     def init(self, root):
         self.rootFrame = root   
+        self.search_radio_button_var = customtkinter.IntVar(value=self.ctx.get_search_type())
         self.content_fileter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_content_filter_checkBox())       
         self.price_filter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_price_filter_checkbox())      
         self.notification_toastup_checkbox_var = customtkinter.StringVar(value=self.ctx.get_notification_toastup_checkbox())
@@ -27,8 +28,21 @@ class ParamView:
         self.rootFrame.columnconfigure(3, weight=0)
         self.rootFrame.columnconfigure(2, weight=1)
               
+        #Search radio button group
+        search_radio_button_group_row = 0
+
+        self.radiobutton_frame = customtkinter.CTkFrame(self.rootFrame)
+        self.radiobutton_frame.grid(row=search_radio_button_group_row, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew", columnspan=4)
+
+        self.search_radio_button_1 = customtkinter.CTkRadioButton(master=self.radiobutton_frame, text="Direct search", variable=self.search_radio_button_var, value=Constants.SearchType.Direct_search)
+        self.search_radio_button_1.grid(row=0, column=0, pady=10, padx=20, sticky="n")
+        self.search_radio_button_2 = customtkinter.CTkRadioButton(master=self.radiobutton_frame, text="History search", variable=self.search_radio_button_var, value=Constants.SearchType.History_search)
+        self.search_radio_button_2.grid(row=0, column=1, pady=10, padx=20, sticky="nsew")
+        self.radiobutton_frame.grid_columnconfigure(0, weight=1)
+        self.radiobutton_frame.grid_columnconfigure(1, weight=1)
+
         #Main filter row
-        main_filter_row = 0
+        main_filter_row = 1
 
         self.rootFrame.main_filter_label = customtkinter.CTkLabel(self.rootFrame, text="Filter", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
         self.rootFrame.main_filter_label.grid(row=main_filter_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=1)            
@@ -38,12 +52,12 @@ class ParamView:
         self.rootFrame.main_filter_textbox.insert("0.0", self.ctx.get_search_text())
     
         #Content filters checkbox
-        content_checkBox_row = 1
+        content_checkBox_row = 2
         self.rootFrame.content_checkBox = customtkinter.CTkCheckBox(self.rootFrame, text="Content filter", command=self.content_fileter_checkbox_event, variable=self.content_fileter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.content_checkBox.grid(row=content_checkBox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)        
         
         #Content filters row
-        content_fileter_row = 2
+        content_fileter_row = 3
         self.rootFrame.content_fileter_label = customtkinter.CTkLabel(self.rootFrame, text="Content filter", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
         self.rootFrame.content_fileter_label.grid(row=content_fileter_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=1)            
         
@@ -53,12 +67,12 @@ class ParamView:
         self.content_fileter_checkbox_event()   
 
         #Price filter checkbox
-        price_filter_checkbox_row = 3
+        price_filter_checkbox_row = 4
         self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Price filter", command=self.price_filter_checkbox_event, variable=self.price_filter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=price_filter_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)         
 
         #Price limit
-        price_limit_row = 4
+        price_limit_row = 5
         self.rootFrame.price_limit_from_label = customtkinter.CTkLabel(self.rootFrame, text="Price From", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
         self.rootFrame.price_limit_from_label.grid(row=price_limit_row, column=0, sticky="nsew", padx=5, pady=5)            
         
@@ -75,7 +89,7 @@ class ParamView:
         self.price_filter_checkbox_event()
 
         #Refresh time row
-        refresh_time_row = 5
+        refresh_time_row = 6
         self.rootFrame.refresh_time_label = customtkinter.CTkLabel(self.rootFrame, text="Refresh time sec", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
         self.rootFrame.refresh_time_label.grid(row=refresh_time_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
         
@@ -84,7 +98,7 @@ class ParamView:
         self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.get_refresh_result() )   
        
         #History diggind days row
-        history_diggind_days_row = 6
+        history_diggind_days_row = 7
         self.rootFrame.history_digging_days_label = customtkinter.CTkLabel(self.rootFrame, text="History digging days", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
         self.rootFrame.history_digging_days_label.grid(row=history_diggind_days_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
         
@@ -93,17 +107,17 @@ class ParamView:
         self.rootFrame.history_digging_days_textbox.insert("0.0", self.ctx.get_history_digging_days() )  
 
         #Notification toast-up checkbox
-        notification_toastup_checkbox_row = 7
+        notification_toastup_checkbox_row = 8
         self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)   
 
         #Notification sound note checkbox
-        notification_soundnote_checkbox_row = 8
+        notification_soundnote_checkbox_row = 9
         self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
         self.rootFrame.price_filter_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)       
 
         #Save button
-        save_button_row = 9
+        save_button_row = 10
         self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save", width=30, height=20,  command=self.save_field_event)
         self.rootFrame.save_button.grid(row=save_button_row, column=0, sticky="nsew",padx=10, pady=10, columnspan=4)
 
@@ -111,6 +125,7 @@ class ParamView:
         if not self.is_valid_digit_fields():
             return
 
+        self.ctx.set_search_type(self.search_radio_button_var.get())
         self.ctx.set_search_text(self.rootFrame.main_filter_textbox.get("0.0", "end"))
         self.ctx.set_content_filter_checkBox(self.content_fileter_checkbox_var.get())
         if self.content_fileter_checkbox_var.get() == customtkinter.ACTIVE:
@@ -126,7 +141,7 @@ class ParamView:
         self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
         self.ctx.set_refresh_result(self.rootFrame.refresh_time_textbox.get("0.0", "end"))
       
-
+        print("set_search_type:", self.ctx.get_search_type())
         print("search_text:", self.ctx.get_search_text())
         print("content_filter_checBox:", self.ctx.get_content_filter_checkBox())
         print("content_filter_text:", self.ctx.get_content_filter_text())        

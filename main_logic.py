@@ -61,9 +61,12 @@ class Main_logic:
         new_content_array = []
         index = 1        
         while True:
-            # new_content = self.get_from_last_content(graberServices_instance, index)
-            new_content = self.get_from_directsearch_content(graberServices_instance, index, self.target_list[0])
-
+            new_content = []
+            if self.ctx.get_search_type() == Constants.SearchType.Direct_search:
+                new_content = self.get_from_directsearch_content(graberServices_instance, index, self.target_list[0])
+            else: 
+                new_content = self.get_from_last_content(graberServices_instance, index)
+          
             new_content_array += new_content
             index = index + 1        
             
