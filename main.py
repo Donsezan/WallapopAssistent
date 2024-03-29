@@ -1,5 +1,8 @@
 import customtkinter
 import os
+import threading
+import time
+
 from main_logic import Main_logic
 from PIL import Image
 from Views.paramView import ParamView
@@ -17,10 +20,12 @@ class App(customtkinter.CTk):
         self.secondFrame = ParamView(self.ctx)  
 
         params: dict | None = None,      
-        self._params         = params
+        self._params = params
+        self.stop_event = threading.Event()
+        self.update_thread = None
 
         self.title("Wallapop assistent")
-        self.geometry("700x450")
+        self.geometry("800x600")
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -105,10 +110,21 @@ class App(customtkinter.CTk):
 
         # show selected frame
         if name == "home":
-            self.home_frame.grid(row=0, column=1, sticky="nsew")
+            self.home_frame.grid(row=0, column=1, sticky="nsew")  
+            self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
+            if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
+                if not self.update_thread or not self.update_thread.is_alive():
+                    self.stop_event.clear()
+                    self.update_thread = threading.Thread(target=self.update_button_text, args=(self.refresh_button, self.stop_event), daemon=True)
+                    self.update_thread.start()
+                else:
+                    self.stop_event.clear()
+
         else:
             self.home_frame.grid_forget()
         if name == "frame_2":
+            self.stop_event.set()
+            self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_pause_text) 
             
             self.secondFrame.init(self.second_frame)
             #self.second_frame.grid(row=0, column=1, sticky="nsew")
@@ -125,14 +141,33 @@ class App(customtkinter.CTk):
         webbrowser.open_new(url)
         
     def refresh_button_event(self):
+        self.stop_event.set()  
         self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
         self.update_idletasks()
         new_content = self.main_logic.get_content()
         self.content_button_frame.destroy()       
         self.draw_content__buttons(new_content)
         self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
+        if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
+            if not self.update_thread or not self.update_thread.is_alive():
+                self.stop_event.clear()
+                self.update_thread = threading.Thread(target=self.update_button_text, args=(self.refresh_button, self.stop_event), daemon=True)
+                self.update_thread.start()
+            else:
+                self.stop_event.clear()
         print("refresh")
         
+    def update_button_text(self, button, stop_event):
+        limit = int(self.ctx.get_refresh_time())
+        count = limit
+        while not stop_event.is_set():            
+            button.configure(text=f"Update in: {count}")
+            count -= 1
+            time.sleep(1)  
+            if count == 0:
+                self.refresh_button_event()
+                count = limit
+    
 if __name__ == "__main__":
     app = App()
     app.mainloop()

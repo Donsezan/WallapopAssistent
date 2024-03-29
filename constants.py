@@ -12,6 +12,8 @@ class Constants:
     
     class Buttons:
         Refresh_button_working_text = "(working)"
-        Refresh_button_normal_text = "Refresh"
+        Refresh_button_normal_text = "Refresh"        
+        Refresh_button_pause_text = "Pause"
         Button_disable_color = "gray30"
         Button_enable_color = ['#3B8ED0', '#1F6AA5']
+        Button_disable_status = "disabled"

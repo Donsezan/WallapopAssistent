@@ -13,6 +13,7 @@ class Context:
     notification_toastup_checkbox = str
     notification_soundnote_checkbox = str
     refresh_result = int
+    auto_refresh_checkbox = str
 
     @classmethod
     def get_search_type(cls):
@@ -47,12 +48,20 @@ class Context:
         cls.content_filter_text = value
 
     @classmethod
-    def get_refresh_result(cls):
+    def get_refresh_time(cls):
         return cls.refresh_result
     
     @classmethod
-    def set_refresh_result(cls, value):
+    def set_refresh_time(cls, value):
         cls.refresh_result = value
+
+    @classmethod
+    def get_auto_refresh_checkbox(cls):
+        return cls.auto_refresh_checkbox
+    
+    @classmethod
+    def set_auto_refresh_checkbox(cls, value):
+        cls.auto_refresh_checkbox = value
 
     @classmethod
     def get_price_filter_checkbox(cls):
@@ -114,7 +123,9 @@ class Context:
             "history_digging_days": Helper.remove_newline_symbol(cls.get_history_digging_days()),
             "notification_toastup_checkbox": cls.get_notification_toastup_checkbox(),
             "notification_soundnote_checkbox": cls.get_notification_soundnote_checkbox(),
-            "refresh_result": Helper.remove_newline_symbol(cls.get_refresh_result())
+            "refresh_result": Helper.remove_newline_symbol(cls.get_refresh_time()),
+            "auto_refresh_checkbox": Helper.remove_newline_symbol(cls.get_auto_refresh_checkbox())
+            
         }
 
     @classmethod
@@ -122,15 +133,16 @@ class Context:
         #data = json.loads(json_str)   
         cls.set_search_type(cls.get_parameter(data, "search_type", Constants.SearchType.Direct_search))
         cls.set_search_text(cls.get_parameter(data, "search_text", "None"))
-        cls.set_content_filter_checkBox(cls.get_parameter(data,"content_filter_checBox", "disabled"))
+        cls.set_content_filter_checkBox(cls.get_parameter(data,"content_filter_checBox", Constants.Buttons.Button_disable_status))
         cls.set_content_filter_text(cls.get_parameter(data, "content_filter_text", "None"))
-        cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", "disabled"))
+        cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", Constants.Buttons.Button_disable_status))
         cls.set_price_limit_from(cls.get_parameter(data, "price_limit_from", 0)) 
         cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 99999))  
         cls.set_history_digging_days(cls.get_parameter(data, "history_digging_days", 0))  
-        cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", "disabled"))
-        cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", "disabled"))
-        cls.set_refresh_result(cls.get_parameter(data, "refresh_result", 60)) 
+        cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", Constants.Buttons.Button_disable_status))
+        cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", Constants.Buttons.Button_disable_status))
+        cls.set_refresh_time(cls.get_parameter(data, "refresh_result", 60)),
+        cls.set_auto_refresh_checkbox(cls.get_parameter(data, "auto_refresh_checkbox", Constants.Buttons.Button_disable_status)),
 
     
     def get_parameter(data, key, default):
