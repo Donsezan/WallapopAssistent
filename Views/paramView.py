@@ -113,13 +113,13 @@ class ParamView:
 
         #Notification toast-up checkbox
         notification_toastup_checkbox_row = 9
-        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        self.rootFrame.price_filter_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)   
+        self.rootFrame.notification_toastup_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification toast-up", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
+        self.rootFrame.notification_toastup_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)   
 
         #Notification sound note checkbox
         notification_soundnote_checkbox_row = 10
-        self.rootFrame.price_filter_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        self.rootFrame.price_filter_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)       
+        self.rootFrame.notification_toastup_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Notification sound note", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
+        self.rootFrame.notification_toastup_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)       
 
         #Save button
         save_button_row = 11

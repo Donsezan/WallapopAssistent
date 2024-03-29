@@ -114,7 +114,7 @@ class Main_logic:
         return new_content
 
     def filter_title_content(self, contents):
-            for filter_text in self.ctx.get_content_filter_text().split(Constants.SearchString_Siparator):  
+            for filter_text in self.ctx.get_search_text().split(Constants.SearchString_Siparator):  
                 contents = [obj for obj in contents if filter_text in obj['title'].lower()]
             return contents
 

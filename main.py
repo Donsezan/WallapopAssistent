@@ -6,6 +6,8 @@ import time
 from main_logic import Main_logic
 from PIL import Image
 from Views.paramView import ParamView
+from helper import Helper
+from Services.NotificationServises import NotificationServises
 from context import Context
 from constants import Constants
 
@@ -18,11 +20,13 @@ class App(customtkinter.CTk):
         self.ctx = Context()  
         self.main_logic = Main_logic(self.ctx)
         self.secondFrame = ParamView(self.ctx)  
+        self.notification = NotificationServises() 
 
         params: dict | None = None,      
         self._params = params
         self.stop_event = threading.Event()
         self.update_thread = None
+        self.content = None
 
         self.title("Wallapop assistent")
         self.geometry("800x600")
@@ -69,6 +73,7 @@ class App(customtkinter.CTk):
 
        
         finalContent = self.main_logic.Init()
+        
         self.draw_content__buttons(finalContent)
  
         # create second frame
@@ -76,6 +81,7 @@ class App(customtkinter.CTk):
         self.select_frame_by_name("home")
       
     def draw_content__buttons(self, finalContent):
+        self.content = finalContent
         row_val = 0
         col_val = 0
         self.content_button_frame = customtkinter.CTkFrame(self.home_frame, corner_radius=0, fg_color="transparent")
@@ -87,7 +93,7 @@ class App(customtkinter.CTk):
         for content in finalContent:        
             # print(content)    
             print(content['title'])
-            result =  os.path.join("temp", content['web_slug']+".jpg")    
+            result =  os.path.join(Constants.Temp_folder, content['web_slug']+".jpg")    
             web_slug = content['web_slug']
             webLinlk = "https://es.wallapop.com/item/" + web_slug
             title = content['title'][:15]
@@ -145,7 +151,9 @@ class App(customtkinter.CTk):
         self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
         self.update_idletasks()
         new_content = self.main_logic.get_content()
-        self.content_button_frame.destroy()       
+        self.content_button_frame.destroy()  
+        old_content = self.content
+
         self.draw_content__buttons(new_content)
         self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
         if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
@@ -155,6 +163,11 @@ class App(customtkinter.CTk):
                 self.update_thread.start()
             else:
                 self.stop_event.clear()
+        
+        if self.ctx.get_notification_toastup_checkbox() == Constants.CheackBox_enabled_status:
+            diff_in_content = Helper.find_differences_in_array(self.content, old_content)
+            if len(diff_in_content) > 0:
+                self.notification.SendNotification(diff_in_content, self.ctx.get_notification_soundnote_checkbox() == Constants.CheackBox_enabled_status)   
         print("refresh")
         
     def update_button_text(self, button, stop_event):
