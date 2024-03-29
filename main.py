@@ -73,9 +73,10 @@ class App(customtkinter.CTk):
             title = content['title'][:15]
             price = content['price']
             finalName = f"{title}\n{price}"
-            self.temp_img = customtkinter.CTkImage(Image.open(result), size=(160, 120))         
+            self.temp_img = customtkinter.CTkImage(Image.open(result), size=(100, 100))         
 
-            button = customtkinter.CTkButton(self.home_frame, text=finalName, image=self.temp_img, compound="top", command = lambda: self.button_event(webLinlk))
+            button_command = lambda link=webLinlk: self.button_event(link)
+            button = customtkinter.CTkButton(self.home_frame, text=finalName, image=self.temp_img, compound="top", command = button_command)
             button.grid(row=row_val, column=col_val, padx=20, pady=20)
             col_val += 1
             if col_val == 3:

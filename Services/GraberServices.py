@@ -1,8 +1,10 @@
 import requests
+from datetime import datetime
+from constants import Constants
 
 class GraberServices:
     def __init__(self):
-            self.searchPath = "https://api.wallapop.com/api/v3/general/search"
+            self.searchPath = Constants.Direct_search_path
             self.headers = {
             'Accept': 'application/json, text/plain, */*',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -28,35 +30,38 @@ class GraberServices:
             'sec-ch-ua-platform': '"Windows"',
             }
             self.parameters = {
+                'user_province': 'Madrid',
+                'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
+                'latitude': '40.22795',
+                'start': '0',
+                'user_region': 'Comunidad de Madrid',
+                'user_city': 'Poligono Industrial Aimayr',
+                'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
+                'country_code': 'ES',
+                'user_postal_code': '29004',
+                'items_count': '40',
                 'filters_source': 'quick_filters',
-                'category_ids': '15000',
+                'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'order_by': 'newest',
-                'latitude': '36.72108',
-                'longitude': '-4.421041',
+                'step': '0',
+                'category_ids': '15000',
+                'longitude': '-3.646063',
             }              
     def SetParam(self, start_value):    
         val = {
-            'user_province': 'Madrid',
-            'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
-            'latitude': '40.22795',
             'start': str(start_value),
-            'user_region': 'Comunidad de Madrid',
-            'user_city': 'Poligono Industrial Aimayr',
-            'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
-            'country_code': 'ES',
-            'user_postal_code': '29004',
-            'items_count': '40',
-            'filters_source': 'quick_filters',
-            'pagination_date': '2024-02-05T21:10:45Z',
-            'order_by': 'newest',
-            'step': '0',
-            'category_ids': '15000',
-            'longitude': '-3.646063',
+            
         }   
-        return val
+        return self.parameters.update(val)
+    def SetParam_for_direct(self, value, step):    
+        val = {           
+            'keywords': str(value),
+            'step': str(step),
+        }   
+        return self.parameters.update(val)
 
     
-    def GetReposne(self, request_param):  
+    def  GetReposne(self, request_param):  
         if request_param is None:
              request_param = self.parameters
         response = requests.get(self.searchPath, headers=self.headers, params=request_param)
@@ -67,12 +72,15 @@ class GraberServices:
     def ParseResults(self, resonse, target_list):
         products = resonse['search_objects']       
         results = []
-        for product in products:
-            title = product['title']
-            for keyword in target_list:
-                if keyword in title:
-                    print(f"The title contains '{keyword}'.")
-                    results.append(product)
+        if target_list is not None and len(self.loaded_contnet) != 0:
+            for product in products:
+                title = product['title']
+                for keyword in target_list:
+                    if keyword in title:
+                        print(f"The title contains '{keyword}'.")
+                        results.append(product)
+        else:
+            results = products
         print ("Proccesed records: ", len(products))
         print ("Results records: ", len(results))
         return results 

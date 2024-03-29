@@ -56,12 +56,12 @@ class FileServices:
                 # If no object with the same id exists, add the new object to the list
                 merged_objects.append(new_obj)
 
-        # merged_objects = json.dumps(merged_objects, indent=2)
-        print("!!!!")        
+        # merged_objects = json.dumps(merged_objects, indent=2)         
         for m_obj in merged_objects:  
             print(m_obj["id"])  
         # print(merged_objects)  
         return merged_objects
+    
     def Delete_old_files(self, content):
         images = []
         if content is None or len(content) == 0:
@@ -80,7 +80,8 @@ class FileServices:
                         print(f"Error: File '{file_path}' not found.")                       
                     except Exception as e:
                         print(f"Error: Unable to delete file '{file_path}'.")
-                        print(f"Error details: {e}")           
+                        print(f"Error details: {e}")     
+                              
     def Download_missed_photos(self, contents):       
         if contents is None or len(contents) == 0:
             return

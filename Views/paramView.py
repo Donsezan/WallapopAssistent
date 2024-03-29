@@ -1,7 +1,12 @@
 import customtkinter
-from constants import Constants
+import sys
+import os
 from Services.FileServices import FileServices
 from helper import Helper
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(parent_dir)
+from constants import Constants
 
 class ParamView:
     def __init__(self, ctx):
@@ -11,7 +16,7 @@ class ParamView:
 
     def init(self, root):
         self.rootFrame = root   
-        self.content_fileter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_content_search_checkBox())       
+        self.content_fileter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_content_filter_checkBox())       
         self.price_filter_checkbox_var = customtkinter.StringVar(value=self.ctx.get_price_filter_checkbox())      
         self.notification_toastup_checkbox_var = customtkinter.StringVar(value=self.ctx.get_notification_toastup_checkbox())
         self.notification_soundnote_checkbox_var = customtkinter.StringVar(value=self.ctx.get_notification_soundnote_checkbox())
@@ -44,7 +49,7 @@ class ParamView:
         
         self.rootFrame.content_fileter_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
         self.rootFrame.content_fileter_textbox.grid(row=content_fileter_row, column=1, sticky="nsew",padx=5, pady=5, columnspan=3)              
-        self.rootFrame.content_fileter_textbox.insert("0.0", self.ctx.get_content_search_text() )
+        self.rootFrame.content_fileter_textbox.insert("0.0", self.ctx.get_content_filter_text() )
         self.content_fileter_checkbox_event()   
 
         #Price filter checkbox
@@ -80,12 +85,12 @@ class ParamView:
        
         #History diggind days row
         history_diggind_days_row = 6
-        self.rootFrame.history_diggind_days_label = customtkinter.CTkLabel(self.rootFrame, text="History diggind days", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
-        self.rootFrame.history_diggind_days_label.grid(row=history_diggind_days_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
+        self.rootFrame.history_digging_days_label = customtkinter.CTkLabel(self.rootFrame, text="History digging days", compound="left", height=20, font=customtkinter.CTkFont(size=15, weight="bold"))    
+        self.rootFrame.history_digging_days_label.grid(row=history_diggind_days_row, column=0, sticky="nsew", padx=10, pady=10,columnspan=1)            
         
-        self.rootFrame.history_diggind_days_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
-        self.rootFrame.history_diggind_days_textbox.grid(row=history_diggind_days_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3) 
-        self.rootFrame.history_diggind_days_textbox.insert("0.0", self.ctx.get_history_diggind_days() )  
+        self.rootFrame.history_digging_days_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=0, height=20, activate_scrollbars= False )
+        self.rootFrame.history_digging_days_textbox.grid(row=history_diggind_days_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3) 
+        self.rootFrame.history_digging_days_textbox.insert("0.0", self.ctx.get_history_digging_days() )  
 
         #Notification toast-up checkbox
         notification_toastup_checkbox_row = 7
@@ -99,36 +104,36 @@ class ParamView:
 
         #Save button
         save_button_row = 9
-        self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save", width=30, height=20,  command=self.linkField_event)
+        self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save", width=30, height=20,  command=self.save_field_event)
         self.rootFrame.save_button.grid(row=save_button_row, column=0, sticky="nsew",padx=10, pady=10, columnspan=4)
 
-    def linkField_event(self):
+    def save_field_event(self):
         if not self.is_valid_digit_fields():
             return
 
         self.ctx.set_search_text(self.rootFrame.main_filter_textbox.get("0.0", "end"))
-        self.ctx.set_content_search_checkBox(self.content_fileter_checkbox_var.get())
-        if self.content_fileter_checkbox_var.get() == customtkinter.NORMAL:
-            self.ctx.set_content_search_text(self.rootFrame.content_fileter_textbox.get("0.0", "end"))
+        self.ctx.set_content_filter_checkBox(self.content_fileter_checkbox_var.get())
+        if self.content_fileter_checkbox_var.get() == customtkinter.ACTIVE:
+            self.ctx.set_content_filter_text(self.rootFrame.content_fileter_textbox.get("0.0", "end"))
         
         self.ctx.set_price_filter_checkbox(self.price_filter_checkbox_var.get())
-        if self.price_filter_checkbox_var.get() == customtkinter.NORMAL:
+        if self.price_filter_checkbox_var.get() == customtkinter.ACTIVE:
             self.ctx.set_price_limit_from(self.rootFrame.price_limit_from_textbox.get("0.0", "end"))
             self.ctx.set_price_limit_to(self.rootFrame.price_limit_to_textbox.get("0.0", "end"))
               
-        self.ctx.set_history_diggind_days(self.rootFrame.history_diggind_days_textbox.get("0.0", "end"))
+        self.ctx.set_history_digging_days(self.rootFrame.history_digging_days_textbox.get("0.0", "end"))
         self.ctx.set_notification_toastup_checkbox(self.notification_toastup_checkbox_var.get())
         self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
         self.ctx.set_refresh_result(self.rootFrame.refresh_time_textbox.get("0.0", "end"))
       
 
         print("search_text:", self.ctx.get_search_text())
-        print("content_search_checBox:", self.ctx.get_content_search_checkBox())
-        print("content_search_text:", self.ctx.get_content_search_text())        
+        print("content_filter_checBox:", self.ctx.get_content_filter_checkBox())
+        print("content_filter_text:", self.ctx.get_content_filter_text())        
         print("price_filter_checkbox_var:", self.ctx.get_price_filter_checkbox())
         print("price_limit_from:", self.ctx.get_price_limit_from())
         print("price_limit_to:", self.ctx.get_price_limit_to())
-        print("set_history_diggind_days:", self.ctx.get_history_diggind_days())
+        print("set_history_digging_days:", self.ctx.get_history_digging_days())
         print("notification_toastup_checkbox:", self.ctx.get_price_limit_to())
         print("notification_soundnote_checkbox:", self.ctx.get_price_limit_to())        
         print("set_refresh_result:", self.ctx.get_refresh_result())

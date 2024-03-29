@@ -2,12 +2,12 @@ from helper import Helper
 
 class Context:
     search_text = str
-    content_search_checBox = str
-    content_search_text = str   
+    content_filter_checBox = str
+    content_filter_text = str   
     price_filter_checkbox = str
     price_limit_from = int
     price_limit_to = int
-    history_diggind_days = int
+    history_digging_days = int
     notification_toastup_checkbox = str
     notification_soundnote_checkbox = str
     refresh_result = int
@@ -21,20 +21,20 @@ class Context:
         cls.search_text = value
 
     @classmethod
-    def get_content_search_checkBox(cls):
-        return cls.content_search_checBox
+    def get_content_filter_checkBox(cls):
+        return cls.content_filter_checBox
     
     @classmethod
-    def set_content_search_checkBox(cls, value):
-        cls.content_search_checBox = value
+    def set_content_filter_checkBox(cls, value):
+        cls.content_filter_checBox = value
 
     @classmethod
-    def get_content_search_text(cls):
-        return cls.content_search_text
+    def get_content_filter_text(cls):
+        return cls.content_filter_text
     
     @classmethod
-    def set_content_search_text(cls, value):
-        cls.content_search_text = value
+    def set_content_filter_text(cls, value):
+        cls.content_filter_text = value
 
     @classmethod
     def get_refresh_result(cls):
@@ -69,12 +69,12 @@ class Context:
         cls.price_limit_to = value
 
     @classmethod
-    def get_history_diggind_days(cls):
-        return cls.history_diggind_days
+    def get_history_digging_days(cls):
+        return int(cls.history_digging_days)
     
     @classmethod
-    def set_history_diggind_days(cls, value):
-        cls.history_diggind_days = value
+    def set_history_digging_days(cls, value):
+        cls.history_digging_days = value
     
     @classmethod
     def get_notification_toastup_checkbox(cls):
@@ -95,12 +95,12 @@ class Context:
     def to_json(cls):
         return {
             "search_text": Helper.remove_newline_symbol(cls.get_search_text()),
-            "content_search_checBox": cls.get_content_search_checkBox(),
-            "content_search_text": Helper.remove_newline_symbol(cls.get_content_search_text()),
+            "content_filter_checBox": cls.get_content_filter_checkBox(),
+            "content_filter_text": Helper.remove_newline_symbol(cls.get_content_filter_text()),
             "price_filter_checkbox": cls.get_price_filter_checkbox(),
             "price_limit_from": Helper.remove_newline_symbol(cls.get_price_limit_from()),
             "price_limit_to": Helper.remove_newline_symbol(cls.get_price_limit_to()),
-            "history_diggind_days": Helper.remove_newline_symbol(cls.get_history_diggind_days()),
+            "history_digging_days": Helper.remove_newline_symbol(cls.get_history_digging_days()),
             "notification_toastup_checkbox": cls.get_notification_toastup_checkbox(),
             "notification_soundnote_checkbox": cls.get_notification_soundnote_checkbox(),
             "refresh_result": Helper.remove_newline_symbol(cls.get_refresh_result())
@@ -109,13 +109,13 @@ class Context:
     @classmethod
     def rehydrate_json(cls, data):
         #data = json.loads(json_str)   
-        cls.set_search_text(cls.get_parameter(data, "default_search_text", "None"))
-        cls.set_content_search_checkBox(cls.get_parameter(data,"content_search_checBox", "disabled"))
-        cls.set_content_search_text(cls.get_parameter(data, "content_search_text", "None"))
+        cls.set_search_text(cls.get_parameter(data, "search_text", "None"))
+        cls.set_content_filter_checkBox(cls.get_parameter(data,"content_filter_checBox", "disabled"))
+        cls.set_content_filter_text(cls.get_parameter(data, "content_filter_text", "None"))
         cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", "disabled"))
         cls.set_price_limit_from(cls.get_parameter(data, "price_limit_from", 0)) 
         cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 0))  
-        cls.set_history_diggind_days(cls.get_parameter(data, "history_diggind_days", 0))  
+        cls.set_history_digging_days(cls.get_parameter(data, "history_digging_days", 0))  
         cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", "disabled"))
         cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", "disabled"))
         cls.set_refresh_result(cls.get_parameter(data, "refresh_result", 60)) 
