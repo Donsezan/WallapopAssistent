@@ -4,6 +4,7 @@ from main_logic import Main_logic
 from PIL import Image
 from Views.paramView import ParamView
 from context import Context
+from constants import Constants
 
 import webbrowser
 
@@ -12,7 +13,7 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.ctx = Context()  
-        main_logic = Main_logic(self.ctx)
+        self.main_logic = Main_logic(self.ctx)
         self.secondFrame = ParamView(self.ctx)  
 
         params: dict | None = None,      
@@ -53,22 +54,32 @@ class App(customtkinter.CTk):
                                                       image=self.chat_image, anchor="w", command=self.frame_2_button_event)
         self.frame_2_button.grid(row=2, column=0, sticky="ew")
 
-        self.refresh_button = customtkinter.CTkButton(self.navigation_frame, text="Refresh", width=30, height=40, command=self.refresh_button_event)
+        self.refresh_button = customtkinter.CTkButton(self.navigation_frame, text=Constants.Buttons.Refresh_button_normal_text, width=30, height=40, command=self.refresh_button_event)
         self.refresh_button.grid(row=4, column=0, sticky="nsew",padx=20, pady=20)
 
 
         # create home frame  
         self.home_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
         self.home_frame.grid_columnconfigure(0, weight=1)
-        self.home_frame.grid_columnconfigure(1, weight=1)
-        self.home_frame.grid_columnconfigure(2, weight=1)
 
        
-        self.finalContent = main_logic.Init()
-
+        finalContent = self.main_logic.Init()
+        self.draw_content__buttons(finalContent)
+ 
+        # create second frame
+        self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.select_frame_by_name("home")
+      
+    def draw_content__buttons(self, finalContent):
         row_val = 0
         col_val = 0
-        for content in self.finalContent:        
+        self.content_button_frame = customtkinter.CTkFrame(self.home_frame, corner_radius=0, fg_color="transparent")
+        self.content_button_frame.grid(row=0, column=0, sticky="nsew")
+        self.content_button_frame.grid_columnconfigure(0, weight=1)
+        self.content_button_frame.grid_columnconfigure(1, weight=1)
+        self.content_button_frame.grid_columnconfigure(2, weight=1)
+
+        for content in finalContent:        
             # print(content)    
             print(content['title'])
             result =  os.path.join("temp", content['web_slug']+".jpg")    
@@ -80,17 +91,12 @@ class App(customtkinter.CTk):
             self.temp_img = customtkinter.CTkImage(Image.open(result), size=(100, 100))         
 
             button_command = lambda link=webLinlk: self.button_event(link)
-            button = customtkinter.CTkButton(self.home_frame, text=finalName, image=self.temp_img, compound="top", command = button_command)
+            button = customtkinter.CTkButton(self.content_button_frame, text=finalName, image=self.temp_img, compound="top", command = button_command)
             button.grid(row=row_val, column=col_val, padx=20, pady=20)
             col_val += 1
             if col_val == 3:
                 col_val = 0
                 row_val += 1   
- 
-        # create second frame
-        self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.select_frame_by_name("home")
-      
 
     def select_frame_by_name(self, name):
         # set button color for selected button
@@ -119,6 +125,12 @@ class App(customtkinter.CTk):
         webbrowser.open_new(url)
         
     def refresh_button_event(self):
+        self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
+        self.update_idletasks()
+        new_content = self.main_logic.get_content()
+        self.content_button_frame.destroy()       
+        self.draw_content__buttons(new_content)
+        self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
         print("refresh")
         
 if __name__ == "__main__":

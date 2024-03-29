@@ -11,8 +11,10 @@ class Main_logic:
         #["NUC","Latitude", "thinkpad", "Dell", "x390", "HP"]
 
     def Init(self):     
-        file_services_instance = FileServices()
- 
+        return  self.get_content()
+    
+    def get_content(self):
+        file_services_instance = FileServices() 
 
         self.ctx.rehydrate_json(file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))
         self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)
@@ -20,7 +22,13 @@ class Main_logic:
         sorted_objects = []
 
         self.loaded_contnet = file_services_instance.Rehidrate_from_file(Constants.History_file_name)
+
+        #Filter old content section
         self.loaded_contnet = self.delete_old_records_in_histry(self.loaded_contnet,  self.ctx.get_history_digging_days())
+        self.loaded_contnet = self.filter_title_content(self.loaded_contnet)
+        self.loaded_contnet = self.filter_description_content(self.loaded_contnet)
+        self.loaded_contnet = self.filter_content_by_price(self.loaded_contnet)
+      
       
         if self.loaded_contnet is not None and len(self.loaded_contnet) != 0:    
             self.loaded_contnet_exist = True  
@@ -31,16 +39,23 @@ class Main_logic:
         # Get the latest object       
         self.new_content_array = self.direct_load_content(sorted_objects)
              
-      
+        #Filter new content section
+        if self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status:
+           self.new_content_array = self.filter_description_content(self.new_content_array)
+
+        if self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status:
+           self.new_content_array = self.filter_content_by_price(self.new_content_array)
+
+
         self.finalContent = file_services_instance.Merge_content(self.loaded_contnet, self.new_content_array)
         file_services_instance.Save_content_to_file(self.finalContent, Constants.History_file_name)
 
-        if self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status:
-           self.finalContent = self.filter_content(self.finalContent)
+       
         file_services_instance.Delete_old_files(self.finalContent)
         file_services_instance.Download_missed_photos(self.finalContent)
-        return  self.finalContent
-    
+
+        return self.sort_content_by_date(self.finalContent, reversed = True)
+
     def content_is_older_than(self, date_str, days):
         date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         time_difference = datetime.now(date_object.tzinfo) - date_object
@@ -92,15 +107,25 @@ class Main_logic:
         new_content = graberServices.ParseResults(self.response, self.target_list) 
         return new_content
     
-    def get_from_directsearch_content(self, graberServices, index, target_text):
-        self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index))
+    def get_from_directsearch_content(self, graberServices, index, target_text):        
+        step = index * Constants.Items_per_rotation
+        self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index,  step - Constants.Items_per_rotation, step))
         new_content = graberServices.ParseResults(self.response, None) 
         return new_content
 
-    def filter_content(self, contents):
+    def filter_title_content(self, contents):
+            for filter_text in self.ctx.get_content_filter_text().split(Constants.SearchString_Siparator):  
+                contents = [obj for obj in contents if filter_text in obj['title'].lower()]
+            return contents
+
+    def filter_description_content(self, contents):
         for filter_text in self.ctx.get_content_filter_text().split(Constants.SearchString_Siparator):  
-             contents = [obj for obj in contents if filter_text in obj['description'].lower()]
+                contents = [obj for obj in contents if filter_text in obj['description'].lower()]
         return contents
     
-    def sort_content_by_date(self, content):
-        return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=True)
+    def filter_content_by_price(self, contents):       
+        filtered_data = [obj for obj in contents if float(self.ctx.get_price_limit_from()) <= float(obj.get('price', '0')) <= float(self.ctx.get_price_limit_to())]
+        return filtered_data
+
+    def sort_content_by_date(self, content, reversed = True):
+        return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)

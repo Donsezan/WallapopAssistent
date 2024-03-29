@@ -149,8 +149,8 @@ class ParamView:
         print("price_limit_from:", self.ctx.get_price_limit_from())
         print("price_limit_to:", self.ctx.get_price_limit_to())
         print("set_history_digging_days:", self.ctx.get_history_digging_days())
-        print("notification_toastup_checkbox:", self.ctx.get_price_limit_to())
-        print("notification_soundnote_checkbox:", self.ctx.get_price_limit_to())        
+        print("notification_toastup_checkbox:", self.ctx.get_notification_toastup_checkbox())
+        print("notification_soundnote_checkbox:", self.ctx.get_notification_soundnote_checkbox())        
         print("set_refresh_result:", self.ctx.get_refresh_result())
         self.file_services_instance.Save_content_to_file(self.ctx.to_json(), Constants.Parameters_file_name)
 

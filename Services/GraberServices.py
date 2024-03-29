@@ -49,14 +49,16 @@ class GraberServices:
             }              
     def SetParam(self, start_value):    
         val = {
-            'start': str(start_value),
-            
+            'start': str(start_value)            
         }   
         return self.parameters.update(val)
-    def SetParam_for_direct(self, value, step):    
+    
+    def SetParam_for_direct(self, value, step, start_items_count, end_items_count):    
         val = {           
+            'start': str(start_items_count),
             'keywords': str(value),
             'step': str(step),
+            'items_count': str(end_items_count),
         }   
         return self.parameters.update(val)
 
@@ -72,7 +74,7 @@ class GraberServices:
     def ParseResults(self, resonse, target_list):
         products = resonse['search_objects']       
         results = []
-        if target_list is not None and len(self.loaded_contnet) != 0:
+        if target_list is not None and len(target_list) != 0:
             for product in products:
                 title = product['title']
                 for keyword in target_list:

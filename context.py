@@ -126,7 +126,7 @@ class Context:
         cls.set_content_filter_text(cls.get_parameter(data, "content_filter_text", "None"))
         cls.set_price_filter_checkbox(cls.get_parameter(data, "price_filter_checkbox", "disabled"))
         cls.set_price_limit_from(cls.get_parameter(data, "price_limit_from", 0)) 
-        cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 0))  
+        cls.set_price_limit_to(cls.get_parameter(data, "price_limit_to", 99999))  
         cls.set_history_digging_days(cls.get_parameter(data, "history_digging_days", 0))  
         cls.set_notification_toastup_checkbox(cls.get_parameter(data, "notification_toastup_checkbox", "disabled"))
         cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", "disabled"))
