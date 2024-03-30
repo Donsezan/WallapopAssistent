@@ -78,7 +78,8 @@ class Main_logic:
         while True:
             new_content = []
             if self.ctx.get_search_type() == Constants.SearchType.Direct_search:
-                new_content = self.get_from_directsearch_content(graberServices_instance, index, self.target_list[0])
+                for target in self.target_list:  
+                    new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
             else: 
                 new_content = self.get_from_last_content(graberServices_instance, index)
           

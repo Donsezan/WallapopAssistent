@@ -6,6 +6,10 @@ class Constants:
     Direct_search_path = "https://api.wallapop.com/api/v3/general/search"    
     Items_per_rotation = 40
     Temp_folder = "temp"
+
+    class Frames:
+        Home = "Home"
+        Settings = "Settings"
     
     class SearchType:
         Direct_search = 0

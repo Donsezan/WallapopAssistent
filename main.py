@@ -53,15 +53,15 @@ class App(customtkinter.CTk):
                                                              compound="left", font=customtkinter.CTkFont(size=15, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
-        self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Home",
+        self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Home,
                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                    image=self.home_image, anchor="w", command=self.home_button_event)
         self.home_button.grid(row=1, column=0, sticky="ew")
 
-        self.frame_2_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Frame 2",
+        self.settings_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Settings,
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      image=self.chat_image, anchor="w", command=self.frame_2_button_event)
-        self.frame_2_button.grid(row=2, column=0, sticky="ew")
+                                                      image=self.chat_image, anchor="w", command=self.settings_button_event)
+        self.settings_button.grid(row=2, column=0, sticky="ew")
 
         self.refresh_button = customtkinter.CTkButton(self.navigation_frame, text=Constants.Buttons.Refresh_button_normal_text, width=30, height=40, command=self.refresh_button_event)
         self.refresh_button.grid(row=4, column=0, sticky="nsew",padx=20, pady=20)
@@ -78,7 +78,7 @@ class App(customtkinter.CTk):
  
         # create second frame
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.select_frame_by_name("home")
+        self.select_frame_by_name(Constants.Frames.Home)
       
     def draw_content__buttons(self, finalContent):
         self.content = finalContent
@@ -111,11 +111,11 @@ class App(customtkinter.CTk):
 
     def select_frame_by_name(self, name):
         # set button color for selected button
-        self.home_button.configure(fg_color=("gray75", "gray25") if name == "home" else "transparent")
-        self.frame_2_button.configure(fg_color=("gray75", "gray25") if name == "frame_2" else "transparent")
+        self.home_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Home else "transparent")
+        self.settings_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Settings else "transparent")
 
         # show selected frame
-        if name == "home":
+        if name == Constants.Frames.Home:
             self.home_frame.grid(row=0, column=1, sticky="nsew")  
             self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
             if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
@@ -125,23 +125,20 @@ class App(customtkinter.CTk):
                     self.update_thread.start()
                 else:
                     self.stop_event.clear()
-
         else:
             self.home_frame.grid_forget()
-        if name == "frame_2":
+        if name == Constants.Frames.Settings:
             self.stop_event.set()
-            self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_pause_text) 
-            
+            self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_pause_text)             
             self.secondFrame.init(self.second_frame)
-            #self.second_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.second_frame.grid_forget()
 
     def home_button_event(self):
-        self.select_frame_by_name("home")
+        self.select_frame_by_name(Constants.Frames.Home)
 
-    def frame_2_button_event(self):
-        self.select_frame_by_name("frame_2")
+    def settings_button_event(self):
+        self.select_frame_by_name(Constants.Frames.Settings)
 
     def button_event(self, url):
         webbrowser.open_new(url)
