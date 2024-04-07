@@ -14,6 +14,9 @@ class Context:
     notification_soundnote_checkbox = str
     refresh_result = int
     auto_refresh_checkbox = str
+    main_content = []
+    
+    context_rehydrate_state = False
 
     @classmethod
     def get_search_type(cls):
@@ -111,6 +114,22 @@ class Context:
     def set_notification_soundnote_checkbox(cls, value):
         cls.notification_soundnote_checkbox = value
 
+    @classmethod
+    def get_main_content(cls):
+        return cls.main_content
+    
+    @classmethod
+    def set_main_content(cls, value):
+        cls.main_content = value
+
+    @classmethod
+    def get_context_rehydrate_state(cls):
+        return cls.context_rehydrate_state
+    
+    @classmethod
+    def set_context_rehydrate_state(cls, value):
+        cls.context_rehydrate_state = value
+
     def to_json(cls):
         return {
             "search_type": Helper.remove_newline_symbol(cls.get_search_type()),            
@@ -143,6 +162,7 @@ class Context:
         cls.set_notification_soundnote_checkbox(cls.get_parameter(data, "notification_soundnote_checkbox", Constants.Buttons.Button_disable_status))
         cls.set_refresh_time(cls.get_parameter(data, "refresh_result", 60)),
         cls.set_auto_refresh_checkbox(cls.get_parameter(data, "auto_refresh_checkbox", Constants.Buttons.Button_disable_status)),
+        cls.set_context_rehydrate_state(True)
 
     
     def get_parameter(data, key, default):

@@ -71,9 +71,8 @@ class App(customtkinter.CTk):
         self.home_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
         self.home_frame.grid_columnconfigure(0, weight=1)
 
-       
-        finalContent = self.main_logic.Init()
-        
+        self.main_logic.rehydrate_contnet()
+        finalContent =  self.ctx.get_main_content()
         self.draw_content__buttons(finalContent)
  
         # create second frame

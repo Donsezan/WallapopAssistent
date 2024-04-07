@@ -1,5 +1,4 @@
 *.pyc
 /temp/*
 **/__pycache__/
-History.josn
-Parameters.json
+*.josn

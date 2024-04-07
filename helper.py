@@ -1,3 +1,4 @@
+import re
 
 class Helper:
      @classmethod
@@ -23,3 +24,6 @@ class Helper:
             if not found:
                 differences.append(obj1)
         return differences
+     
+     def split_string(text):
+        return re.split(r'[,\s]+', text)

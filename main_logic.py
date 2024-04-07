@@ -1,60 +1,64 @@
 from Services.GraberServices import GraberServices
 from Services.FileServices import FileServices
+from Services.FiltersServices import FiltersServices
 from constants import Constants
 from datetime import datetime 
+from helper import Helper
 
 class Main_logic:
     def __init__(self, ctx):
         self.ctx = ctx
         self.target_list = ""
-        self.loaded_contnet_exist = False
-        #["NUC","Latitude", "thinkpad", "Dell", "x390", "HP"]
-
-    def Init(self):     
-        return  self.get_content()
-    
-    def get_content(self):
-        file_services_instance = FileServices() 
-
-        self.ctx.rehydrate_json(file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))
-        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)
-       
-        sorted_objects = []
-
-        self.loaded_contnet = file_services_instance.Rehidrate_from_file(Constants.History_file_name)
+        self.first_run = True
+        self.file_services_instance = FileServices() 
+        self.filtering_services_instance = FiltersServices()   
+           
+    def rehydrate_contnet(self):     
+        if (self.ctx.get_context_rehydrate_state()):
+            return self.ctx.get_main_content()
+        
+        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))
+        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)           
+        loaded_contnet = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name)
 
         #Filter old content section
-        self.loaded_contnet = self.delete_old_records_in_histry(self.loaded_contnet,  self.ctx.get_history_digging_days())
-        self.loaded_contnet = self.filter_title_content(self.loaded_contnet)
-        self.loaded_contnet = self.filter_description_content(self.loaded_contnet)
-        self.loaded_contnet = self.filter_content_by_price(self.loaded_contnet)
-      
-      
-        if self.loaded_contnet is not None and len(self.loaded_contnet) != 0:    
-            self.loaded_contnet_exist = True  
-            sorted_objects = self.sort_content_by_date(self.loaded_contnet)
-        else:
-            self.loaded_contnet_exist = False             
+        loaded_contnet = self.delete_old_records_in_histry(loaded_contnet,  self.ctx.get_history_digging_days())  
+        loaded_contnet = self.filtering_services_instance.filteringContent(contents=loaded_contnet,
+                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
+                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
+                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
+                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
+                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
+        
+        previos_sorted_objects = []   
+        if loaded_contnet is not None and len(loaded_contnet) != 0:
+            previos_sorted_objects = self.sort_content_by_date(loaded_contnet)     
 
-        # Get the latest object       
-        self.new_content_array = self.direct_load_content(sorted_objects)
-             
+        self.ctx.set_main_content(previos_sorted_objects) 
+        self.ctx.set_context_rehydrate_state(True)     
+        return previos_sorted_objects
+    
+    def get_content(self):       
+        previos_sorted_objects = self.ctx.get_main_content()
+        new_content_array = self.load_content(previos_sorted_objects)             
         #Filter new content section
-        if self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status:
-           self.new_content_array = self.filter_description_content(self.new_content_array)
-
-        if self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status:
-           self.new_content_array = self.filter_content_by_price(self.new_content_array)
-
-
-        self.finalContent = file_services_instance.Merge_content(self.loaded_contnet, self.new_content_array)
-        file_services_instance.Save_content_to_file(self.finalContent, Constants.History_file_name)
-
        
-        file_services_instance.Delete_old_files(self.finalContent)
-        file_services_instance.Download_missed_photos(self.finalContent)
+        new_content_array = self.filtering_services_instance.filteringContent(contents=new_content_array,
+                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
+                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
+                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
+                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
+                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
 
-        return self.sort_content_by_date(self.finalContent, reversed = True)
+        if len( Helper.find_differences_in_array(new_content_array, previos_sorted_objects) ) > 0:
+            finalContent = self.file_services_instance.Merge_content(previos_sorted_objects, new_content_array)
+            self.file_services_instance.Save_content_to_file(finalContent, Constants.History_file_name)        
+            self.file_services_instance.Delete_old_files(finalContent)
+            self.file_services_instance.Download_missed_photos(finalContent)
+            previos_sorted_objects = finalContent
+            self.ctx.set_main_content(self.sort_content_by_date(previos_sorted_objects, reversed = True))
+
+        return previos_sorted_objects
 
     def content_is_older_than(self, date_str, days):
         date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
@@ -62,7 +66,7 @@ class Main_logic:
         return time_difference.days > days
     
     def delete_old_records_in_histry(self, contents, days):
-        if self.loaded_contnet is None or len(self.loaded_contnet) == 0:      
+        if contents is None or len(contents) == 0:      
             return None
         for content in contents:  
             date_object = content['creation_date']
@@ -70,9 +74,12 @@ class Main_logic:
                 contents.remove(content)
         return contents
     
-    def direct_load_content(self, sorted_objects):
+    def load_content(self, sorted_objects):
+        # if __debug__:
+        #     return self.file_services_instance.Rehidrate_from_file('sample_content')
+
         graberServices_instance = GraberServices()
-        dip_limit = 5
+        dip_limit = 10
         new_content_array = []
         index = 1        
         while True:
@@ -97,10 +104,9 @@ class Main_logic:
                 new_content_reachedLimit = self.content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.get_history_digging_days())
                 if new_content_reachedLimit:
                     break
-                if self.loaded_contnet_exist:  
-                    if len(sorted_objects) > 0:  
-                        if datetime.fromisoformat(sorted_objects[0]['modification_date']) >=  datetime.fromisoformat(new_sorted_content[-1]['modification_date']):
-                            break
+                if not sorted_objects is None and len(sorted_objects) > 0:    
+                    if datetime.fromisoformat(sorted_objects[0]['modification_date']) >=  datetime.fromisoformat(new_sorted_content[-1]['modification_date']):
+                        break
         return new_content_array             
 
     def get_from_last_content(self, graberServices, index):
@@ -112,21 +118,7 @@ class Main_logic:
         step = index * Constants.Items_per_rotation
         self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index,  step - Constants.Items_per_rotation, step))
         new_content = graberServices.ParseResults(self.response, None) 
-        return new_content
-
-    def filter_title_content(self, contents):
-            for filter_text in self.ctx.get_search_text().split(Constants.SearchString_Siparator):  
-                contents = [obj for obj in contents if filter_text in obj['title'].lower()]
-            return contents
-
-    def filter_description_content(self, contents):
-        for filter_text in self.ctx.get_content_filter_text().split(Constants.SearchString_Siparator):  
-                contents = [obj for obj in contents if filter_text in obj['description'].lower()]
-        return contents
-    
-    def filter_content_by_price(self, contents):       
-        filtered_data = [obj for obj in contents if float(self.ctx.get_price_limit_from()) <= float(obj.get('price', '0')) <= float(self.ctx.get_price_limit_to())]
-        return filtered_data
+        return new_content   
 
     def sort_content_by_date(self, content, reversed = True):
         return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)
