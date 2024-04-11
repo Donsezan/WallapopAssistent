@@ -16,9 +16,8 @@ class Main_logic:
     def rehydrate_contnet(self):     
         if (self.ctx.get_context_rehydrate_state()):
             return self.ctx.get_main_content()
-        
-        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))
-        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)           
+        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)    
+        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))               
         loaded_contnet = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name)
 
         #Filter old content section
@@ -79,6 +78,7 @@ class Main_logic:
         #     return self.file_services_instance.Rehidrate_from_file('sample_content')
 
         graberServices_instance = GraberServices()
+        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)    
         dip_limit = 10
         new_content_array = []
         index = 1        
