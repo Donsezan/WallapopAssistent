@@ -1,4 +1,5 @@
 import re
+from datetime import datetime 
 
 class Helper:
      @classmethod
@@ -27,3 +28,6 @@ class Helper:
      
      def split_string(text):
         return re.split(r'[,\s]+', text)
+     
+     def sort_content_by_date(content, reversed = True):
+        return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)

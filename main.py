@@ -71,8 +71,8 @@ class App(customtkinter.CTk):
         self.home_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
         self.home_frame.grid_columnconfigure(0, weight=1)
 
-        self.main_logic.rehydrate_contnet()
-        finalContent =  self.ctx.get_main_content()
+        self.main_logic.rehydrate_contnet()        
+        finalContent = self.main_logic.get_content()
         self.draw_content__buttons(finalContent)
  
         # create second frame
@@ -80,6 +80,7 @@ class App(customtkinter.CTk):
         self.select_frame_by_name(Constants.Frames.Home)
       
     def draw_content__buttons(self, finalContent):
+        finalContent = Helper.sort_content_by_date(finalContent)
         self.content = finalContent
         row_val = 0
         col_val = 0

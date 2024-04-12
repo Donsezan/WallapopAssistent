@@ -31,7 +31,7 @@ class Main_logic:
         
         previos_sorted_objects = []   
         if loaded_contnet is not None and len(loaded_contnet) != 0:
-            previos_sorted_objects = self.sort_content_by_date(loaded_contnet)     
+            previos_sorted_objects = Helper.sort_content_by_date(loaded_contnet)     
 
         self.ctx.set_main_content(previos_sorted_objects) 
         self.ctx.set_context_rehydrate_state(True)     
@@ -55,7 +55,7 @@ class Main_logic:
             self.file_services_instance.Delete_old_files(finalContent)
             self.file_services_instance.Download_missed_photos(finalContent)
             previos_sorted_objects = finalContent
-            self.ctx.set_main_content(self.sort_content_by_date(previos_sorted_objects, reversed = True))
+            self.ctx.set_main_content(Helper.sort_content_by_date(previos_sorted_objects, reversed = True))
 
         return previos_sorted_objects
 
@@ -100,7 +100,7 @@ class Main_logic:
                 break               
 
             if len(new_content) > 0:
-                new_sorted_content =  self.sort_content_by_date(new_content)  
+                new_sorted_content =  Helper.sort_content_by_date(new_content)  
                 new_content_reachedLimit = self.content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.get_history_digging_days())
                 if new_content_reachedLimit:
                     break
@@ -120,5 +120,4 @@ class Main_logic:
         new_content = graberServices.ParseResults(self.response, None) 
         return new_content   
 
-    def sort_content_by_date(self, content, reversed = True):
-        return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)
+  
