@@ -17,6 +17,7 @@ class Context:
     main_content = []
     
     context_rehydrate_state = False
+    updated_paramter_status = True
 
     @classmethod
     def get_search_type(cls):
@@ -129,6 +130,14 @@ class Context:
     @classmethod
     def set_context_rehydrate_state(cls, value):
         cls.context_rehydrate_state = value
+
+    @classmethod
+    def get_updated_paramter_status(cls):
+        return cls.updated_paramter_status
+    
+    @classmethod
+    def set_updated_paramter_status(cls, value):
+        cls.updated_paramter_status = value
 
     def to_json(cls):
         return {

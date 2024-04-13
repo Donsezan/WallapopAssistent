@@ -148,7 +148,7 @@ class ParamView:
         self.ctx.set_history_digging_days(self.rootFrame.history_digging_days_textbox.get("0.0", "end"))
         self.ctx.set_notification_toastup_checkbox(self.notification_toastup_checkbox_var.get())
         self.ctx.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
-
+        self.ctx.set_updated_paramter_status(True)
       
         print("set_search_type:", self.ctx.get_search_type())
         print("search_text:", self.ctx.get_search_text())

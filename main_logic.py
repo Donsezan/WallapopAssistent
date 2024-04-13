@@ -22,12 +22,7 @@ class Main_logic:
 
         #Filter old content section
         loaded_contnet = self.delete_old_records_in_histry(loaded_contnet,  self.ctx.get_history_digging_days())  
-        loaded_contnet = self.filtering_services_instance.filteringContent(contents=loaded_contnet,
-                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
-                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
-                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
-                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
-                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
+        loaded_contnet = self._filterContent(contents=loaded_contnet)
         
         previos_sorted_objects = []   
         if loaded_contnet is not None and len(loaded_contnet) != 0:
@@ -37,17 +32,16 @@ class Main_logic:
         self.ctx.set_context_rehydrate_state(True)     
         return previos_sorted_objects
     
-    def get_content(self):       
-        previos_sorted_objects = self.ctx.get_main_content()
+    def get_content(self):   
+        previos_sorted_objects = self.ctx.get_main_content()    
+        if(self.ctx.get_updated_paramter_status()):
+            previos_sorted_objects= self._filterContent(contents=previos_sorted_objects)
+            self.ctx.set_updated_paramter_status(False)
+     
         new_content_array = self.load_content(previos_sorted_objects)             
         #Filter new content section
        
-        new_content_array = self.filtering_services_instance.filteringContent(contents=new_content_array,
-                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
-                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
-                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
-                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
-                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
+        new_content_array = self._filterContent(contents=new_content_array)
 
         if len( Helper.find_differences_in_array(new_content_array, previos_sorted_objects) ) > 0:
             finalContent = self.file_services_instance.Merge_content(previos_sorted_objects, new_content_array)
@@ -58,6 +52,15 @@ class Main_logic:
             self.ctx.set_main_content(Helper.sort_content_by_date(previos_sorted_objects, reversed = True))
 
         return previos_sorted_objects
+
+    def _filterContent(self, contents):
+        return self.filtering_services_instance.filteringContent(contents=contents,
+                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
+                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
+                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
+                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
+                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
+
 
     def content_is_older_than(self, date_str, days):
         date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
