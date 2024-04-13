@@ -20,12 +20,11 @@ class Main_logic:
         self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))               
         loaded_contnet = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name)
 
-        #Filter old content section
-        loaded_contnet = self.delete_old_records_in_histry(loaded_contnet,  self.ctx.get_history_digging_days())  
-        loaded_contnet = self._filterContent(contents=loaded_contnet)
-        
+        #Filter old content section  
         previos_sorted_objects = []   
         if loaded_contnet is not None and len(loaded_contnet) != 0:
+            loaded_contnet = self.delete_old_records_in_histry(loaded_contnet,  self.ctx.get_history_digging_days())  
+            loaded_contnet = self._filterContent(contents=loaded_contnet)
             previos_sorted_objects = Helper.sort_content_by_date(loaded_contnet)     
 
         self.ctx.set_main_content(previos_sorted_objects) 
@@ -37,6 +36,7 @@ class Main_logic:
         if(self.ctx.get_updated_paramter_status()):
             previos_sorted_objects= self._filterContent(contents=previos_sorted_objects)
             self.ctx.set_updated_paramter_status(False)
+            self.ctx.set_main_content(previos_sorted_objects)    
      
         new_content_array = self.load_content(previos_sorted_objects)             
         #Filter new content section
@@ -79,10 +79,11 @@ class Main_logic:
     def load_content(self, sorted_objects):
         # if __debug__:
         #     return self.file_services_instance.Rehidrate_from_file('sample_content')
+        previos_atempt_sucseed = True
 
         graberServices_instance = GraberServices()
         self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)    
-        dip_limit = 10
+        #dip_limit = 500
         new_content_array = []
         index = 1        
         while True:
@@ -97,10 +98,12 @@ class Main_logic:
             index = index + 1        
             
             if len(self.response['search_objects']) == 0:
-                break
+                if not previos_atempt_sucseed:                   
+                    break
+                previos_atempt_sucseed = False
 
-            if index > dip_limit:
-                break               
+            # if index > dip_limit:
+            #     break               
 
             if len(new_content) > 0:
                 new_sorted_content =  Helper.sort_content_by_date(new_content)  

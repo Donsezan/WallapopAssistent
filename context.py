@@ -77,7 +77,7 @@ class Context:
 
     @classmethod
     def get_price_limit_from(cls):
-        return cls.price_limit_from
+        return int(cls.price_limit_from)
     
     @classmethod
     def set_price_limit_from(cls, value):
@@ -85,7 +85,7 @@ class Context:
 
     @classmethod
     def get_price_limit_to(cls):
-        return cls.price_limit_to
+        return int(cls.price_limit_to)
     
     @classmethod
     def set_price_limit_to(cls, value):

@@ -15,6 +15,10 @@ class Helper:
         return output
      
      def find_differences_in_array(array1, array2):
+        if not isinstance(array1, list):
+            array1 = []
+        if not isinstance(array2, list):
+            array2 = []    
         differences = []
         for obj1 in array1:
             found = False

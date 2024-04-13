@@ -6,12 +6,12 @@ import time
 from main_logic import Main_logic
 from PIL import Image
 from Views.paramView import ParamView
+from Views.mainView import MainView
 from helper import Helper
 from Services.NotificationServises import NotificationServises
 from context import Context
 from constants import Constants
 
-import webbrowser
 
 class App(customtkinter.CTk):  
 
@@ -19,6 +19,7 @@ class App(customtkinter.CTk):
         super().__init__()
         self.ctx = Context()  
         self.main_logic = Main_logic(self.ctx)
+        self.mainFrame = MainView(self.ctx)
         self.secondFrame = ParamView(self.ctx)  
         self.notification = NotificationServises() 
 
@@ -26,7 +27,8 @@ class App(customtkinter.CTk):
         self._params = params
         self.stop_event = threading.Event()
         self.update_thread = None
-        self.content = None
+        self.content = None        
+        self.current_frame = None
 
         self.title("Wallapop assistent")
         self.geometry("800x600")
@@ -66,57 +68,32 @@ class App(customtkinter.CTk):
         self.refresh_button = customtkinter.CTkButton(self.navigation_frame, text=Constants.Buttons.Refresh_button_normal_text, width=30, height=40, command=self.refresh_button_event)
         self.refresh_button.grid(row=4, column=0, sticky="nsew",padx=20, pady=20)
 
+        #logic 
+        self.main_logic.rehydrate_contnet()    
+        finalContent = self.main_logic.get_content()
 
         # create home frame  
-        self.home_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
-        self.home_frame.grid_columnconfigure(0, weight=1)
-
-        self.main_logic.rehydrate_contnet()        
-        finalContent = self.main_logic.get_content()
-        self.draw_content__buttons(finalContent)
- 
+        self.main_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
+        self.mainFrame.init(self.main_frame)
+        self.mainFrame.draw_content__buttons(finalContent)          
+     
         # create second frame
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        
         self.select_frame_by_name(Constants.Frames.Home)
-      
-    def draw_content__buttons(self, finalContent):
-        finalContent = Helper.sort_content_by_date(finalContent)
-        self.content = finalContent
-        row_val = 0
-        col_val = 0
-        self.content_button_frame = customtkinter.CTkFrame(self.home_frame, corner_radius=0, fg_color="transparent")
-        self.content_button_frame.grid(row=0, column=0, sticky="nsew")
-        self.content_button_frame.grid_columnconfigure(0, weight=1)
-        self.content_button_frame.grid_columnconfigure(1, weight=1)
-        self.content_button_frame.grid_columnconfigure(2, weight=1)
-
-        for content in finalContent:        
-            # print(content)    
-            print(content['title'])
-            result =  os.path.join(Constants.Temp_folder, content['web_slug']+".jpg")    
-            web_slug = content['web_slug']
-            webLinlk = "https://es.wallapop.com/item/" + web_slug
-            title = content['title'][:15]
-            price = content['price']
-            finalName = f"{title}\n{price}"
-            self.temp_img = customtkinter.CTkImage(Image.open(result), size=(100, 100))         
-
-            button_command = lambda link=webLinlk: self.button_event(link)
-            button = customtkinter.CTkButton(self.content_button_frame, text=finalName, image=self.temp_img, compound="top", command = button_command)
-            button.grid(row=row_val, column=col_val, padx=20, pady=20)
-            col_val += 1
-            if col_val == 3:
-                col_val = 0
-                row_val += 1   
 
     def select_frame_by_name(self, name):
-        # set button color for selected button
+
         self.home_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Home else "transparent")
         self.settings_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Settings else "transparent")
 
+        if self.current_frame == name:
+            return
+
         # show selected frame
         if name == Constants.Frames.Home:
-            self.home_frame.grid(row=0, column=1, sticky="nsew")  
+            self.current_frame = Constants.Frames.Home
+            self.mainFrame.init(self.main_frame)
             self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
             if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
                 if not self.update_thread or not self.update_thread.is_alive():
@@ -126,8 +103,9 @@ class App(customtkinter.CTk):
                 else:
                     self.stop_event.clear()
         else:
-            self.home_frame.grid_forget()
+            self.main_frame.grid_forget()
         if name == Constants.Frames.Settings:
+            self.current_frame = Constants.Frames.Settings
             self.stop_event.set()
             self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_pause_text)             
             self.secondFrame.init(self.second_frame)
@@ -140,18 +118,15 @@ class App(customtkinter.CTk):
     def settings_button_event(self):
         self.select_frame_by_name(Constants.Frames.Settings)
 
-    def button_event(self, url):
-        webbrowser.open_new(url)
         
     def refresh_button_event(self):
         self.stop_event.set()  
         self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
         self.update_idletasks()
         new_content = self.main_logic.get_content()
-        self.content_button_frame.destroy()  
         old_content = self.content
 
-        self.draw_content__buttons(new_content)
+        self.mainFrame.draw_content__buttons(new_content)
         self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
         if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
             if not self.update_thread or not self.update_thread.is_alive():
@@ -165,7 +140,7 @@ class App(customtkinter.CTk):
             diff_in_content = Helper.find_differences_in_array(self.content, old_content)
             if len(diff_in_content) > 0:
                 self.notification.SendNotification(diff_in_content, self.ctx.get_notification_soundnote_checkbox() == Constants.CheackBox_enabled_status)   
-        print("refresh")
+        print("-Refresh action")
         
     def update_button_text(self, button, stop_event):
         limit = int(self.ctx.get_refresh_time())

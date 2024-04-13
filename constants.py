@@ -1,5 +1,5 @@
 class Constants:
-    History_file_name = "History.josn"
+    History_file_name = "History.json"
     Parameters_file_name = "Parameters.json"
     SearchString_Siparator = ','
     CheackBox_enabled_status = "active"
