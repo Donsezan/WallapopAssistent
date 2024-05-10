@@ -1,0 +1,14 @@
+{
+  "search_type": 0,
+  "search_text": "NUC",
+  "content_filter_checBox": "active",
+  "content_filter_text": "i5",
+  "price_filter_checkbox": "active",
+  "price_limit_from": 0,
+  "price_limit_to": 200,
+  "history_digging_days": 2,
+  "notification_toastup_checkbox": "active",
+  "notification_soundnote_checkbox": "disabled",
+  "refresh_result": "60",
+  "auto_refresh_checkbox": "active"
+}

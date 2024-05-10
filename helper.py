@@ -35,3 +35,6 @@ class Helper:
      
      def sort_content_by_date(content, reversed = True):
         return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)
+     
+     def getByKey(dictionary, key):
+        return dictionary.get(key, None)

@@ -2,7 +2,7 @@ import customtkinter
 import webbrowser
 import os
 
-from context import Context
+from Context.context import Context
 from constants import Constants
 from PIL import Image
 from helper import Helper

@@ -9,7 +9,7 @@ from Views.paramView import ParamView
 from Views.mainView import MainView
 from helper import Helper
 from Services.NotificationServises import NotificationServises
-from context import Context
+from Context.context import Context
 from constants import Constants
 
 
@@ -23,8 +23,8 @@ class App(customtkinter.CTk):
         self.secondFrame = ParamView(self.ctx)  
         self.notification = NotificationServises() 
 
-        params: dict | None = None,      
-        self._params = params
+        #params: dict | None = None,      
+        self._params :  dict | None = None
         self.stop_event = threading.Event()
         self.update_thread = None
         self.content = None        
