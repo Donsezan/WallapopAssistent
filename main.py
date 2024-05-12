@@ -95,7 +95,7 @@ class App(customtkinter.CTk):
             self.current_frame = Constants.Frames.Home
             self.mainFrame.init(self.main_frame)
             self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
-            if self.ctx.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
+            if self.ctx.MainParameters.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
                 if not self.update_thread or not self.update_thread.is_alive():
                     self.stop_event.clear()
                     self.update_thread = threading.Thread(target=self.update_button_text, args=(self.refresh_button, self.stop_event), daemon=True)

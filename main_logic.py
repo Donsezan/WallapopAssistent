@@ -15,32 +15,24 @@ class Main_logic:
            
     def rehydrate_contnet(self):     
         if (self.ctx.get_context_rehydrate_state()):
-            return self.ctx.get_main_content()
-        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))               
-        loaded_contnet = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name)    
-            
- 
-        #Filter out old content section   
-        previos_sorted_content = dict 
-        if loaded_contnet is not None and bool(loaded_contnet):
-            syncked = self._syncContentWithSettings(contents_dicts=loaded_contnet)
-            for key, value in syncked:                    
-                filterdByDate = self._delete_old_records_in_histry(value,  self.ctx.get_history_digging_days()) 
-                filterdByDate_syncked_filtredByContent = self._filterContent(contents=filterdByDate, key=key)
-                final_soreted_value = Helper.sort_content_by_date(filterdByDate_syncked_filtredByContent)
-                previos_sorted_content[key] = final_soreted_value
-            
-
-        self.ctx.set_all_content(previos_sorted_content) 
+            return
+        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))   
+        for key, data in  self.ctx.MainParameters.get_dict().items():            
+            self.ctx.MainParameters.set_content(key,  self.file_services_instance.Rehidrate_from_file(Constants.History_file_name(data.SearchGuid)))   
+        
+            content = self.ctx.MainParameters.get_parameter_byKey(key).Content
+            content_date = self._delete_old_records_in_histry(content, self.ctx.MainParameters.get_history_digging_days())
+            content_date_filtred = self._filterContent(content_date, key)
+            content_date_filtred_sorted = Helper.sort_content_by_date(content_date_filtred)
+            self.ctx.MainParameters.get_parameter_byKey(key).Content = content_date_filtred_sorted
         self.ctx.set_context_rehydrate_state(True)     
-        return previos_sorted_content
     
     def get_content(self):   
         new_content = {}
         final_content = {}
         changing_exist = False
 
-        existing_content = self.ctx.get_all_content()  
+        existing_content = self.ctx.MainParameters.get_content()  
 
         if(self.ctx.get_updated_paramter_status()):
             content = self._syncContentWithSettings(contents_dicts=existing_content)
@@ -50,7 +42,7 @@ class Main_logic:
                 self.ctx.set_updated_paramter_status(False) 
      
 
-        for param_key in self.ctx.get_parameter_dicts(): 
+        for param_key in self.ctx.MainParameters.get_dict(): 
             downloaded_content = self.load_content(sorted_objects=Helper.getByKey(existing_content, param_key), key=param_key)              
             downloaded_filtred_content = self._filterContent(contents=downloaded_content, key=param_key)
 
@@ -69,22 +61,22 @@ class Main_logic:
         else:
             final_content = existing_content
 
-        self.ctx.set_all_content(final_content)
+        self.ctx.MainParameters.set_all_content(final_content)
         return final_content
 
     def _filterContent(self, contents, key):
 
         return self.filtering_services_instance.filteringContent(contents=contents,
-                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text(key)),
-                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox(key) == Constants.CheackBox_enabled_status,
-                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text(key)),
-                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox(key) == Constants.CheackBox_enabled_status,
-                                                                            priceRange=[self.ctx.get_price_limit_from(key),
-                                                                            self.ctx.get_price_limit_to(key)])
+                                                                            titlePatern=Helper.split_string(self.ctx.MainParameters.get_search_text(key)),
+                                                                            isDiscriptionCheck= self.ctx.MainParameters.get_content_filter_checkBox(key) == Constants.CheackBox_enabled_status,
+                                                                            discriptionPatern=Helper.split_string(self.ctx.MainParameters.get_content_filter_text(key)),
+                                                                            isPriceCheck=self.ctx.MainParameters.get_price_filter_checkbox(key) == Constants.CheackBox_enabled_status,
+                                                                            priceRange=[self.ctx.MainParameters.get_price_limit_from(key),
+                                                                            self.ctx.MainParameters.get_price_limit_to(key)])
 
     def _syncContentWithSettings(self, contents_dicts):
         result = {} 
-        for key in self.ctx.get_parameter_dicts():       
+        for key, data in self.ctx.MainParameters.get_dict().items():       
             if key in contents_dicts:
                 result[key] = contents_dicts[key]
         return result
@@ -95,13 +87,14 @@ class Main_logic:
         return time_difference.days > days
     
     def _delete_old_records_in_histry(self, contents, days):
-        if contents is None or len(contents) == 0:      
-            return None
-        for content in contents:  
+        if len(contents) == 0:
+            return
+        filtred_content = []
+        for content in contents:
             date_object = content['creation_date']
-            if(self._content_is_older_than(date_object, days)):
-                contents.remove(content)
-        return contents
+            if(not self._content_is_older_than(date_object, days)):
+                filtred_content.append(content)
+        return filtred_content
     
     def load_content(self, sorted_objects, key):
         if __debug__:
