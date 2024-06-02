@@ -37,6 +37,7 @@ class ParamView():
         self.rootFrame.columnconfigure(2, weight=1)
 
         self.paramTabView.init(self.rootFrame)
+        self.update_values()
 
         #Auto refresh checkbox
         auto_refresh_checkbox_row = 7
@@ -140,7 +141,12 @@ class ParamView():
             self.is_save_bloked = False    
             self.rootFrame.save_button.configure(fg_color= Constants.Buttons.Button_enable_color, text="Save")  
 
+    def update_values(self):
+        if self.auto_refresh_checkbox_var == customtkinter.ACTIVE:
+            self.rootFrame.refresh_time_textbox.delete()
+            self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.TempParameters.get_refresh_time())
 
+             
 
 
 

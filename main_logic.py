@@ -18,51 +18,46 @@ class Main_logic:
             return
         self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))   
         for key, data in  self.ctx.MainParameters.get_dict().items():            
-            self.ctx.MainParameters.set_content(key,  self.file_services_instance.Rehidrate_from_file(Constants.History_file_name(data.SearchGuid)))   
-        
-            content = self.ctx.MainParameters.get_parameter_byKey(key).Content
+            rehidrated_content = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name(self.ctx.MainParameters.get_SearchGuid(key)))
+            if rehidrated_content is None:
+                rehidrated_content = []
+            # self.ctx.MainParameters.set_content(key, rehidrated_content)          
+            content = self.ctx.MainParameters.get_parameter_byKey(key)._content
             content_date = self._delete_old_records_in_histry(content, self.ctx.MainParameters.get_history_digging_days())
             content_date_filtred = self._filterContent(content_date, key)
             content_date_filtred_sorted = Helper.sort_content_by_date(content_date_filtred)
-            self.ctx.MainParameters.get_parameter_byKey(key).Content = content_date_filtred_sorted
+            self.ctx.MainParameters.set_content(key, content_date_filtred_sorted)
         self.ctx.set_context_rehydrate_state(True)     
     
-    def get_content(self):   
-        new_content = {}
-        final_content = {}
-        changing_exist = False
-
-        existing_content = self.ctx.MainParameters.get_content()  
-
+    def Download_content(self):   
+        #Start
+        changing_exist = []
         if(self.ctx.get_updated_paramter_status()):
-            content = self._syncContentWithSettings(contents_dicts=existing_content)
-            for key, value in content: 
-                filterd_content= self._filterContent(contents=value, key=key)               
-                existing_content[key]=filterd_content
-                self.ctx.set_updated_paramter_status(False) 
-     
+            for key, data in  self.ctx.MainParameters.get_dict().items():   
+                content_filtred = self._filterContent(data._content, key)
+                content_filtred_sorted = Helper.sort_content_by_date(content_filtred)
+              
+                #ToDoAsync
+                downloaded_content = self.load_content(sorted_objects=content_filtred_sorted, key=key)
+                downloaded_content_filtred = self._filterContent(downloaded_content, key)
+                
+                if len( Helper.find_differences_in_array(downloaded_content_filtred, content_filtred_sorted) ) > 0:
+                    final_content = self.file_services_instance.Merge_content(content_filtred_sorted, downloaded_content_filtred)
+                    self.file_services_instance.Download_missed_photos(final_content)
+                    self.file_services_instance.Save_content_to_file(final_content, Constants.History_file_name(data._searchGuid))
+                    merged_content = self.file_services_instance.Merge_content(self.ctx.MainParameters.get_content(key), final_content)
+                    self.ctx.MainParameters.set_content(key, Helper.sort_content_by_date(merged_content, reversed = True))
+                    changing_exist.append(True)
+            self.ctx.set_updated_paramter_status(False) 
 
-        for param_key in self.ctx.MainParameters.get_dict(): 
-            downloaded_content = self.load_content(sorted_objects=Helper.getByKey(existing_content, param_key), key=param_key)              
-            downloaded_filtred_content = self._filterContent(contents=downloaded_content, key=param_key)
+        if any(changing_exist):
+            all_content = self.ctx.MainParameters.get_all_content()       
+            self.file_services_instance.Delete_old_images(all_content)
 
-            #Filter new content section         
-            existing_content_byKey = Helper.getByKey(existing_content, param_key)    
-            if len( Helper.find_differences_in_array(downloaded_filtred_content, existing_content_byKey) ) > 0:
-                finalContent = self.file_services_instance.Merge_content(existing_content_byKey, downloaded_filtred_content)               
-                self.file_services_instance.Delete_old_files(finalContent)
-                self.file_services_instance.Download_missed_photos(finalContent)
-                new_content[param_key] = Helper.sort_content_by_date(finalContent, reversed = True)
-                changing_exist = True
-
-        if changing_exist:
-            self.file_services_instance.Save_content_to_file(final_content, Constants.History_file_name)
-            final_content = new_content
-        else:
-            final_content = existing_content
-
-        self.ctx.MainParameters.set_all_content(final_content)
-        return final_content
+        uuids = []
+        if len(self.ctx.MainParameters.get_dict()) != 0:            
+            uuids = [obj._searchGuid for obj in self.ctx.MainParameters.get_dict().values()]
+        self.file_services_instance.Delete_old_historys(uuids)
 
     def _filterContent(self, contents, key):
 
@@ -87,9 +82,10 @@ class Main_logic:
         return time_difference.days > days
     
     def _delete_old_records_in_histry(self, contents, days):
-        if len(contents) == 0:
-            return
         filtred_content = []
+        if len(contents) == 0:
+            return filtred_content
+       
         for content in contents:
             date_object = content['creation_date']
             if(not self._content_is_older_than(date_object, days)):
@@ -98,17 +94,17 @@ class Main_logic:
     
     def load_content(self, sorted_objects, key):
         if __debug__:
-            return self.file_services_instance.Rehidrate_from_file('sample_content.json')
+            return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
         previos_atempt_sucseed = True
 
         graberServices_instance = GraberServices()
-        self.target_list = self.ctx.get_search_text(key).split(Constants.SearchString_Siparator)    
+        self.target_list = self.ctx.MainParameters.get_search_text(key).split(Constants.SearchString_Siparator)    
         #dip_limit = 500
         new_content_array = []
         index = 1        
         while True:
             new_content = []
-            if self.ctx.get_search_type(key) == Constants.SearchType.Direct_search:
+            if self.ctx.MainParameters.get_search_type(key) == Constants.SearchType.Direct_search:
                 for target in self.target_list:  
                     new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
             else: 
@@ -127,7 +123,7 @@ class Main_logic:
 
             if len(new_content) > 0:
                 new_sorted_content =  Helper.sort_content_by_date(new_content)  
-                new_content_reachedLimit = self._content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.get_history_digging_days())
+                new_content_reachedLimit = self._content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.MainParameters.get_history_digging_days())
                 if new_content_reachedLimit:
                     break
                 if not sorted_objects is None and len(sorted_objects) > 0:    

@@ -192,7 +192,7 @@ class ParamTabView:
         content_fileter_checkbox = tab.content_fileter_checkbox_var.get()
         self.ctx.TempParameters.set_content_filter_checkBox(tab_name, content_fileter_checkbox)
         if content_fileter_checkbox == customtkinter.ACTIVE:
-            self.ctx.TempParameters.set_content_filter_text(tab.content_fileter_textbox.get("0.0", "end"))
+            self.ctx.TempParameters.set_content_filter_text(tab_name, tab.content_fileter_textbox.get("0.0", "end"))
 
         price_filter_checkbox = tab.price_filter_checkbox_var.get()
         self.ctx.TempParameters.set_price_filter_checkbox(tab_name, price_filter_checkbox)

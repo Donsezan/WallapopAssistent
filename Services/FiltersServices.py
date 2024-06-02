@@ -7,6 +7,8 @@ class FiltersServices:
         print ("Init FiltersServices")
 
     def filteringContent(self, contents, titlePatern, discriptionPatern,  priceRange, isDiscriptionCheck = False, isPriceCheck = False):
+        if contents is None or len(contents) == 0:
+             return contents
         contents = self._filter_text(contents, titlePatern, 'title')
         if isDiscriptionCheck:
            contents = self._filter_text(contents, discriptionPatern, 'description')

@@ -21,7 +21,7 @@ class SearchContentDetails:
         self._price_limit_from = price_limit_from
         self._price_limit_to = price_limit_to  
         self._searchGuid = searchGuid
-        self._content = {}
+        self._content = []
 
         @property
         def Search_type(self):
@@ -84,7 +84,7 @@ class SearchContentDetails:
             return  self._searchGuid
 
         @SearchGuid.setter
-        def Price_limit_to(self, value):
+        def SearchGuid(self, value):
             self._searchGuid = value
 
         @property
@@ -92,7 +92,7 @@ class SearchContentDetails:
             return  self._content
 
         @Content.setter
-        def Price_limit_to(self, value):
+        def Content(self, value):
             self._content = value        
 
         def to_json(self):

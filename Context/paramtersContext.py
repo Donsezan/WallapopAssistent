@@ -142,7 +142,24 @@ class ParamtersContext(SearchContentDetails):
     @classmethod
     def get_content(cls, dict_name):
         Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)   
-        return int(cls.ParamtersStructure.parameter_dict[dict_name]._content)
+        return cls.ParamtersStructure.parameter_dict[dict_name]._content
+    
+    @classmethod
+    def get_SearchGuid(cls, dict_name):
+        Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)   
+        return cls.ParamtersStructure.parameter_dict[dict_name]._searchGuid
+    
+    @classmethod
+    def set_SearchGuid(cls, dict_name, value):
+        Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)   
+        cls.ParamtersStructure.parameter_dict[dict_name]._searchGuid = value
+
+    @classmethod
+    def get_all_content(cls):
+        result = []
+        for key, value in cls.ParamtersStructure.parameter_dict.items():
+            result.extend(value._content)
+        return result
     
     @classmethod
     def set_content(cls, dict_name, value):

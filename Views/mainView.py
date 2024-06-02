@@ -22,6 +22,10 @@ class MainView:
         if self.rootFrame.content_button_frame is not None:
             self.rootFrame.content_button_frame.destroy()  
 
+        #TODO
+        if finalContent is None or len(finalContent) == 0:
+            return
+
         finalContent = Helper.sort_content_by_date(finalContent)
         self.rootFrame.content = finalContent
         row_val = 0
