@@ -125,5 +125,5 @@ class SearchContentDetails:
         Content_filter_text = "content_filter_text"
         Price_filter_checkbox = "price_filter_checkbox"
         Price_limit_from = "price_limit_from"
-        Price_limit_to = "price_limit_to",
+        Price_limit_to = "price_limit_to"
         SearchGuid_= "searchGuid"

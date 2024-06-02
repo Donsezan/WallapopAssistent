@@ -16,7 +16,6 @@ class ParamTabView:
             self.rootFrame.tabview.add(param_key)      
             paramters = self.ctx.TempParameters.get_parameter_byKey(param_key)
             self.create_param_tab(self.rootFrame.tabview.tab(param_key), paramters)
-            self.rootFrame.tabview.set(param_key)
 
         self.rootFrame.tabview.add("+")            
         self.create_add_tab(self.rootFrame.tabview.tab("+"))

@@ -66,7 +66,7 @@ class Context():
                 cls.MainParameters.set_price_filter_checkbox(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_filter_checkbox, Constants.Buttons.Button_disable_status))
                 cls.MainParameters.set_price_limit_from(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_from, 0))
                 cls.MainParameters.set_price_limit_to(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_to, 99999))
-                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_to, str(uuid.uuid4())))
+                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.SearchGuid_, str(uuid.uuid4())))
         cls.set_context_rehydrate_state(True)
     
     def _get_parameter(data, key, default):
