@@ -20,7 +20,7 @@ class App(customtkinter.CTk):
         self.ctx = Context()  
         self.main_logic = Main_logic(self.ctx)
         self.mainFrame = MainView(self.ctx)
-        self.ParamViewFrame = ParamView(self.ctx)  
+        self.ParamViewFrame = ParamView(self.ctx, self.main_logic)  
         self.notification = NotificationServises() 
 
         #params: dict | None = None,      
@@ -70,12 +70,12 @@ class App(customtkinter.CTk):
 
         #logic 
         self.main_logic.rehydrate_contnet()    
-        finalContent = self.main_logic.Download_content()
+        self.main_logic.Download_content()
 
         # create home frame  
         self.main_frame = customtkinter.CTkScrollableFrame(self, corner_radius=0, fg_color="transparent")
         self.mainFrame.init(self.main_frame)
-        self.mainFrame.draw_content__buttons(finalContent)          
+        #self.mainFrame.draw_content__buttons(finalContent)          
      
         # create second frame
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
@@ -124,10 +124,9 @@ class App(customtkinter.CTk):
         self.stop_event.set()  
         self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
         self.update_idletasks()
-        new_content = self.main_logic.Download_content()
-        old_content = self.content
-
-        self.mainFrame.draw_content__buttons(new_content)
+        new_content = self.main_logic.Download_content(True)
+        self.mainFrame.init(self.main_frame)
+        
         self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
         if self.ctx.MainParameters.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
             if not self.update_thread or not self.update_thread.is_alive():
@@ -137,10 +136,9 @@ class App(customtkinter.CTk):
             else:
                 self.stop_event.clear()
         
-        if self.ctx.MainParameters.get_notification_toastup_checkbox() == Constants.CheackBox_enabled_status:
-            diff_in_content = Helper.find_differences_in_array(self.content, old_content)
-            if len(diff_in_content) > 0:
-                self.notification.SendNotification(diff_in_content, self.ctx.MainParameters.get_notification_soundnote_checkbox() == Constants.CheackBox_enabled_status)   
+        if self.ctx.MainParameters.get_notification_toastup_checkbox() == Constants.CheackBox_enabled_status:          
+            if any(new_content):
+                self.notification.SendNotification(new_content, self.ctx.MainParameters.get_notification_soundnote_checkbox() == Constants.CheackBox_enabled_status)   
         print("-Refresh action")
         
     def update_button_text(self, button, stop_event):

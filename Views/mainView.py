@@ -1,21 +1,27 @@
+import os
+import sys
 import customtkinter
 import webbrowser
-import os
 
-from Context.context import Context
 from constants import Constants
 from PIL import Image
 from helper import Helper
+from Views.mainTabView import MainTabView
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(parent_dir)
 
 class MainView:
     def __init__(self, ctx):
-        self.ctx = ctx        
+        self.ctx = ctx      
+        self.mainTabView = MainTabView(self.ctx)        
 
     def init(self, root):
         self.rootFrame = root  
         self.rootFrame.grid_columnconfigure(0, weight=1)  
         self.rootFrame.content_button_frame = None    
         self.rootFrame.grid(row=0, column=1, sticky="nsew")    
+        self.mainTabView.init(self.rootFrame)   
 
     def draw_content__buttons(self, finalContent):
       

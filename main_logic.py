@@ -29,25 +29,26 @@ class Main_logic:
             self.ctx.MainParameters.set_content(key, content_date_filtred_sorted)
         self.ctx.set_context_rehydrate_state(True)     
     
-    def Download_content(self):   
+    def Download_content(self, force = False):   
         #Start
         changing_exist = []
-        if(self.ctx.get_updated_paramter_status()):
+        if(self.ctx.get_updated_paramter_status() or force):
             for key, data in  self.ctx.MainParameters.get_dict().items():   
                 content_filtred = self._filterContent(data._content, key)
                 content_filtred_sorted = Helper.sort_content_by_date(content_filtred)
               
-                #ToDoAsync
+                #ToDo Async
                 downloaded_content = self.load_content(sorted_objects=content_filtred_sorted, key=key)
                 downloaded_content_filtred = self._filterContent(downloaded_content, key)
                 
-                if len( Helper.find_differences_in_array(downloaded_content_filtred, content_filtred_sorted) ) > 0:
+                diff_in_content = Helper.find_differences_in_array(downloaded_content_filtred, content_filtred_sorted)
+                if len(diff_in_content) > 0:
                     final_content = self.file_services_instance.Merge_content(content_filtred_sorted, downloaded_content_filtred)
                     self.file_services_instance.Download_missed_photos(final_content)
                     self.file_services_instance.Save_content_to_file(final_content, Constants.History_file_name(data._searchGuid))
                     merged_content = self.file_services_instance.Merge_content(self.ctx.MainParameters.get_content(key), final_content)
                     self.ctx.MainParameters.set_content(key, Helper.sort_content_by_date(merged_content, reversed = True))
-                    changing_exist.append(True)
+                    changing_exist.append(diff_in_content)
             self.ctx.set_updated_paramter_status(False) 
 
         if any(changing_exist):
@@ -58,6 +59,7 @@ class Main_logic:
         if len(self.ctx.MainParameters.get_dict()) != 0:            
             uuids = [obj._searchGuid for obj in self.ctx.MainParameters.get_dict().values()]
         self.file_services_instance.Delete_old_historys(uuids)
+        return any(changing_exist)
 
     def _filterContent(self, contents, key):
 
@@ -93,8 +95,8 @@ class Main_logic:
         return filtred_content
     
     def load_content(self, sorted_objects, key):
-        if __debug__:
-            return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
+        # if __debug__:
+        #     return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
         previos_atempt_sucseed = True
 
         graberServices_instance = GraberServices()

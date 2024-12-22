@@ -30,21 +30,21 @@ class GraberServices:
             'sec-ch-ua-platform': '"Windows"',
             }
             self.parameters = {
-                'user_province': 'Madrid',
-                'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
-                'latitude': '40.22795',
+                # 'user_province': 'Madrid',
+                # 'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
+                'latitude': '36.6563536',
                 'start': '0',
                 'user_region': 'Comunidad de Madrid',
-                'user_city': 'Poligono Industrial Aimayr',
-                'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
+                # 'user_city': 'Poligono Industrial Aimayr',
+                # 'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
                 'country_code': 'ES',
                 'user_postal_code': '29004',
                 'items_count': '40',
                 'filters_source': 'quick_filters',
-                'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                # 'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'order_by': 'newest',
                 'step': '0',
-                'category_ids': '15000',
+                # 'category_ids': '15000',
                 'longitude': '-3.646063',
             }              
     def SetParam(self, start_value):    

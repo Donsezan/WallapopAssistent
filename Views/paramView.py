@@ -12,8 +12,9 @@ sys.path.append(parent_dir)
 from constants import Constants
 
 class ParamView():
-    def __init__(self, ctx):
+    def __init__(self, ctx, main_logic):
         self.ctx = ctx
+        self.main_logic = main_logic
         self.rootFrame = object 
         self.paramTabView = ParamTabView(self.ctx)       
         self.file_services_instance = FileServices()
@@ -111,9 +112,15 @@ class ParamView():
         self.ctx.TempParameters.set_notification_soundnote_checkbox(self.notification_soundnote_checkbox_var.get())                 
         self.ctx.set_updated_paramter_status(True)
  
+        #TODO update content       
+
+        if(self.ctx.get_updated_paramter_status()):
+            for key, data in  self.ctx.TempParameters.get_dict().items():   
+                content_filtred =  self.main_logic._filterContent(data._content, key)
+                self.ctx.TempParameters.set_content(key, content_filtred)
+        
         ### Set back to main content
         self.ctx.MainParameters.overide_dict(self.ctx.TempParameters.get_dict())
-
         self.file_services_instance.Save_content_to_file(self.ctx.to_json(), Constants.Parameters_file_name)
        
     def auto_refresh_checkbox_event(self):
