@@ -101,7 +101,7 @@ class Main_logic:
 
         graberServices_instance = GraberServices()
         self.target_list = self.ctx.MainParameters.get_search_text(key).split(Constants.SearchString_Siparator)    
-        #dip_limit = 500
+        dip_limit = 100
         new_content_array = []
         index = 1        
         while True:
@@ -120,8 +120,8 @@ class Main_logic:
                     break
                 previos_atempt_sucseed = False
 
-            # if index > dip_limit:
-            #     break               
+            if index > dip_limit:
+                 break               
 
             if len(new_content) > 0:
                 new_sorted_content =  Helper.sort_content_by_date(new_content)  

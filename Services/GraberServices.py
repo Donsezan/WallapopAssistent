@@ -68,7 +68,7 @@ class GraberServices:
              request_param = self.parameters
         response = requests.get(self.searchPath, headers=self.headers, params=request_param)
         if response.status_code != 200:
-            raise Exception("Unexpected resonse code: "+ response.status_code)
+            raise Exception(f"Unexpected response code: {response.status_code}")
         return response.json()
 
     def ParseResults(self, resonse, target_list):
