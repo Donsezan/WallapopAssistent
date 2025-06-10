@@ -1,4 +1,4 @@
-from Services.GraberServices import GraberServices
+from Services.GraberServices import GraberServices, APIConnectionError
 from Services.FileServices import FileServices
 from Services.FiltersServices import FiltersServices
 from constants import Constants
@@ -13,7 +13,9 @@ class Main_logic:
         self.file_services_instance = FileServices() 
         self.filtering_services_instance = FiltersServices()   
            
-    def rehydrate_contnet(self):     
+    def rehydrate_contnet(self, offline_error=False):     
+        if offline_error:
+            self.ctx.set_offline_error(True)
         if (self.ctx.get_context_rehydrate_state()):
             return
         self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))   
@@ -98,6 +100,7 @@ class Main_logic:
         # if __debug__:
         #     return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
         previos_atempt_sucseed = True
+        api_error_occurred = False
 
         graberServices_instance = GraberServices()
         self.target_list = self.ctx.MainParameters.get_search_text(key).split(Constants.SearchString_Siparator)    
@@ -106,16 +109,25 @@ class Main_logic:
         index = 1        
         while True:
             new_content = []
-            if self.ctx.MainParameters.get_search_type(key) == Constants.SearchType.Direct_search:
-                for target in self.target_list:  
-                    new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
-            else: 
-                new_content = self.get_from_last_content(graberServices_instance, index)
+            try:
+                if self.ctx.MainParameters.get_search_type(key) == Constants.SearchType.Direct_search:
+                    for target in self.target_list:  
+                        new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
+                else: 
+                    new_content = self.get_from_last_content(graberServices_instance, index)
+            except APIConnectionError:
+                # Consider logging the error here e.g. print(f"APIConnectionError occurred while fetching content for key {key}")
+                api_error_occurred = True
+                break # Exit the while loop if API error occurs
           
             new_content_array += new_content
             index = index + 1        
             
-            if len(self.response['search_objects']) == 0:
+            # The 'self.response' might not be set if an API error occurred before the first successful call in the loop.
+            # Or if new_content is empty due to API error in one of the calls within the loop for Direct_search.
+            if api_error_occurred and not new_content: # If an error occurred and we got no new items in this iteration.
+                 pass # api_error_occurred flag will handle this after loop
+            elif 'search_objects' not in self.response or len(self.response['search_objects']) == 0 : # Check if response has search_objects
                 if not previos_atempt_sucseed:                   
                     break
                 previos_atempt_sucseed = False
@@ -123,7 +135,7 @@ class Main_logic:
             if index > dip_limit:
                  break               
 
-            if len(new_content) > 0:
+            if len(new_content) > 0: # This check should be if new_content was successfully populated
                 new_sorted_content =  Helper.sort_content_by_date(new_content)  
                 new_content_reachedLimit = self._content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.MainParameters.get_history_digging_days())
                 if new_content_reachedLimit:
@@ -131,14 +143,27 @@ class Main_logic:
                 if not sorted_objects is None and len(sorted_objects) > 0:    
                     if datetime.fromisoformat(sorted_objects[0]['modification_date']) >=  datetime.fromisoformat(new_sorted_content[-1]['modification_date']):
                         break
+            elif not previos_atempt_sucseed and not api_error_occurred : # if no new content and no error, and it's the second attempt
+                break
+
+
+        if api_error_occurred or not new_content_array:
+            self.rehydrate_contnet(offline_error=True)
+            # Return empty list or previously sorted_objects if API error, 
+            # as new_content_array might be incomplete or empty.
+            # This depends on desired behavior: either return old data or signal error upstream.
+            # For now, returning existing new_content_array (which could be empty).
+            
         return new_content_array             
 
     def get_from_last_content(self, graberServices, index):
+        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
         self.response = graberServices.GetReposne(request_param=graberServices.SetParam(index * 40))
         new_content = graberServices.ParseResults(self.response, self.target_list) 
         return new_content
     
     def get_from_directsearch_content(self, graberServices, index, target_text):        
+        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
         step = index * Constants.Items_per_rotation
         self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index,  step - Constants.Items_per_rotation, step))
         new_content = graberServices.ParseResults(self.response, None) 

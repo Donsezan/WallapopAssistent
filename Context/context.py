@@ -8,6 +8,7 @@ class Context():
     parameter_dict = dict()
     context_rehydrate_state = False
     updated_paramter_status = True
+    offline_error_status = False
         
     @classmethod
     def get_context_rehydrate_state(cls):
@@ -24,6 +25,14 @@ class Context():
     @classmethod
     def set_updated_paramter_status(cls, value):
         cls.updated_paramter_status = value
+
+    @classmethod
+    def set_offline_error(cls, value):
+        cls.offline_error_status = value
+    
+    @classmethod
+    def get_offline_error(cls): # Optional, but good for consistency
+        return cls.offline_error_status
 
     def to_json(cls):
         parameter_dict_serialized = {}

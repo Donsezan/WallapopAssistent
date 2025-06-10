@@ -2,6 +2,10 @@ import requests
 from datetime import datetime
 from constants import Constants
 
+class APIConnectionError(Exception):
+    """Custom exception for API connection errors."""
+    pass
+
 class GraberServices:
     def __init__(self):
             self.searchPath = Constants.Direct_search_path
@@ -67,8 +71,14 @@ class GraberServices:
         if request_param is None:
              request_param = self.parameters
         response = requests.get(self.searchPath, headers=self.headers, params=request_param)
-        if response.status_code != 200:
-            raise Exception(f"Unexpected response code: {response.status_code}")
+        try:
+            response = requests.get(self.searchPath, headers=self.headers, params=request_param)
+            response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code      
+        except requests.exceptions.ConnectionError as e:
+            raise APIConnectionError(f"API connection error: {e}")
+        except requests.exceptions.HTTPError as e:
+            raise APIConnectionError(f"API request failed with status {e.response.status_code}: {e}")
+        
         return response.json()
 
     def ParseResults(self, resonse, target_list):
