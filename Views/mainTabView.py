@@ -18,7 +18,7 @@ class MainTabView:
             self.rootFrame.tabview.destroy()
 
         self.rootFrame.tabview = customtkinter.CTkTabview(self.rootFrame)
-        self.rootFrame.tabview.grid(row=0, column=0, padx=(20, 20), pady=(0, 0), sticky="nsew", columnspan=4)       
+        self.rootFrame.tabview.grid(row=self.ctx.get_content_buttons_row_to_use(), column=0, padx=(20, 20), pady=(0, 0), sticky="nsew", columnspan=4)       
 
         self.rootFrame.tabview.add("All")      
         self.fill_content_tab(self.rootFrame.tabview.tab("All"), self.ctx.MainParameters.get_all_content())

@@ -9,6 +9,7 @@ class Context():
     context_rehydrate_state = False
     updated_paramter_status = True
     offline_error_status = False
+    content_buttons_row_to_use = 0
         
     @classmethod
     def get_context_rehydrate_state(cls):
@@ -33,6 +34,14 @@ class Context():
     @classmethod
     def get_offline_error(cls): # Optional, but good for consistency
         return cls.offline_error_status
+    
+    @classmethod
+    def set_content_buttons_row_to_use(cls, value):
+        cls.content_buttons_row_to_use = value
+    
+    @classmethod
+    def get_content_buttons_row_to_use(cls): # Optional, but good for consistency
+        return cls.content_buttons_row_to_use
 
     def to_json(cls):
         parameter_dict_serialized = {}

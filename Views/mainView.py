@@ -34,7 +34,7 @@ class MainView:
             self.offline_message_label = None
 
         is_offline = self.ctx.get_offline_error()
-        content_buttons_row_to_use = 0
+        self.ctx.set_content_buttons_row_to_use(0)
 
         if is_offline:
             self.offline_message_label = customtkinter.CTkLabel(
@@ -44,14 +44,14 @@ class MainView:
                 font=customtkinter.CTkFont(size=14, weight="bold")
             )
             self.offline_message_label.grid(row=0, column=0, sticky="new", padx=10, pady=(5, 5))
-            content_buttons_row_to_use = 1
+            self.ctx.set_content_buttons_row_to_use(1)
         
         # --- Existing Content Button Frame Handling ---
         if self.rootFrame.content_button_frame is not None:
             self.rootFrame.content_button_frame.destroy()  
         
         self.rootFrame.content_button_frame = customtkinter.CTkFrame(self.rootFrame, corner_radius=0, fg_color="transparent")
-        self.rootFrame.content_button_frame.grid(row=content_buttons_row_to_use, column=0, sticky="nsew")
+        self.rootFrame.content_button_frame.grid(row=self.ctx.get_content_buttons_row_to_use(), column=0, sticky="nsew")
         
         self.rootFrame.content_button_frame.grid_columnconfigure(0, weight=1)
         self.rootFrame.content_button_frame.grid_columnconfigure(1, weight=1)
