@@ -2,6 +2,10 @@ import requests
 from datetime import datetime
 from constants import Constants
 
+class APIConnectionError(Exception):
+    """Custom exception for API connection errors."""
+    pass
+
 class GraberServices:
     def __init__(self):
             self.searchPath = Constants.Direct_search_path
@@ -30,21 +34,21 @@ class GraberServices:
             'sec-ch-ua-platform': '"Windows"',
             }
             self.parameters = {
-                'user_province': 'Madrid',
-                'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
-                'latitude': '40.22795',
+                # 'user_province': 'Madrid',
+                # 'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
+                'latitude': '36.6563536',
                 'start': '0',
                 'user_region': 'Comunidad de Madrid',
-                'user_city': 'Poligono Industrial Aimayr',
-                'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
+                # 'user_city': 'Poligono Industrial Aimayr',
+                # 'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
                 'country_code': 'ES',
                 'user_postal_code': '29004',
                 'items_count': '40',
                 'filters_source': 'quick_filters',
-                'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                # 'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'order_by': 'newest',
                 'step': '0',
-                'category_ids': '15000',
+                # 'category_ids': '15000',
                 'longitude': '-3.646063',
             }              
     def SetParam(self, start_value):    
@@ -67,8 +71,14 @@ class GraberServices:
         if request_param is None:
              request_param = self.parameters
         response = requests.get(self.searchPath, headers=self.headers, params=request_param)
-        if response.status_code != 200:
-            raise Exception("Unexpected resonse code: "+ response.status_code)
+        try:
+            response = requests.get(self.searchPath, headers=self.headers, params=request_param)
+            response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code      
+        except requests.exceptions.ConnectionError as e:
+            raise APIConnectionError(f"API connection error: {e}")
+        except requests.exceptions.HTTPError as e:
+            raise APIConnectionError(f"API request failed with status {e.response.status_code}: {e}")
+        
         return response.json()
 
     def ParseResults(self, resonse, target_list):

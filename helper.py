@@ -1,4 +1,5 @@
 import re
+import customtkinter
 from datetime import datetime 
 
 class Helper:
@@ -35,3 +36,20 @@ class Helper:
      
      def sort_content_by_date(content, reversed = True):
         return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)
+     
+     def getByKey(dictionary, key):
+        return dictionary.get(key, None)
+          
+     def _validationForKey(dictionary, key):
+        if not key in dictionary:
+            raise ValueError("invalid dictionary key: " + key)
+        
+     def validate_int(textbox):
+        value = Helper.remove_newline_symbol(textbox.get("0.0", "end"))
+        print(textbox.cget("fg_color"))
+        if value.isdigit():
+            textbox.configure(state = customtkinter.NORMAL, fg_color= ['#F9F9FA', '#1D1E1E'])   
+            return True
+        else:       
+            textbox.configure(state = customtkinter.NORMAL, fg_color= "red")   
+            return False    

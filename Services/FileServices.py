@@ -11,9 +11,9 @@ class FileServices:
         if data is None or len(data) == 0:
             return "Nothing to save"
         try:
-            file_path = os.path.join(os.getcwd(), file_name)
+            file_path = os.path.join(self.temp_folder, file_name)
             with open(file_path, 'w') as json_file:
-                json.dump(data, json_file, indent=2)
+                json.dump(data, json_file, indent=4)
             print(f"Object successfully saved to {file_path}")
         except IOError as e:
             print(f"Error saving object to {file_path}: {e}")
@@ -21,7 +21,8 @@ class FileServices:
     def Rehidrate_from_file(self, file_name):
         try:
             # Open the file in read mode ('r')
-            with open(file_name, 'r') as file:
+            file_path = os.path.join(self.temp_folder, file_name)
+            with open(file_path, 'r') as file:
                 # Load JSON data from the file
                 json_data = json.load(file)
                 return json_data
@@ -62,7 +63,7 @@ class FileServices:
         # print(merged_objects)  
         return merged_objects
     
-    def Delete_old_files(self, content):
+    def Delete_old_images(self, content):
         images = []
         if content is None or len(content) == 0:
             images = []
@@ -71,16 +72,28 @@ class FileServices:
                 images.append(content[i]['web_slug'])
         files_in_folder = os.listdir(self.temp_folder)
         for file_name in files_in_folder:
-                file_path = os.path.join(self.temp_folder, file_name)
-                if file_name.split('.', 1)[0] not in images:   
-                    try:
-                        os.remove(file_path)
-                        print(f"File '{file_path}' deleted successfully.")                        
-                    except FileNotFoundError:
-                        print(f"Error: File '{file_path}' not found.")                       
-                    except Exception as e:
-                        print(f"Error: Unable to delete file '{file_path}'.")
-                        print(f"Error details: {e}")     
+                if not file_name.endswith(".json"):
+                    file_path = os.path.join(self.temp_folder, file_name)
+                    if file_name.split('.', 1)[0] not in images:   
+                        try:
+                            os.remove(file_path)
+                            print(f"File '{file_path}' deleted successfully.")                        
+                        except FileNotFoundError:
+                            print(f"Error: File '{file_path}' not found.")                       
+                        except Exception as e:
+                            print(f"Error: Unable to delete file '{file_path}'.")
+                            print(f"Error details: {e}")
+
+    def Delete_old_historys(self, keys):       
+        files = os.listdir(self.temp_folder)        
+        for file in files:
+            if file.startswith("History") and file.endswith(".json"):
+                file_stem = os.path.splitext(file)[0]
+                history_file_uuid = file_stem.split("_")[-1]
+                if history_file_uuid not in keys:
+                    file_path = os.path.join(self.temp_folder, file)
+                    os.remove(file_path)
+                    print(f"Deleted: {file_path}")
                               
     def Download_missed_photos(self, contents):       
         if contents is None or len(contents) == 0:

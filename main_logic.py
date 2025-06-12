@@ -1,4 +1,4 @@
-from Services.GraberServices import GraberServices
+from Services.GraberServices import GraberServices, APIConnectionError
 from Services.FileServices import FileServices
 from Services.FiltersServices import FiltersServices
 from constants import Constants
@@ -13,117 +13,160 @@ class Main_logic:
         self.file_services_instance = FileServices() 
         self.filtering_services_instance = FiltersServices()   
            
-    def rehydrate_contnet(self):     
+    def rehydrate_contnet(self, offline_error=False):     
+        if offline_error:
+            self.ctx.set_offline_error(True)
         if (self.ctx.get_context_rehydrate_state()):
-            return self.ctx.get_main_content()
-        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)    
-        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))               
-        loaded_contnet = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name)
-
-        #Filter old content section  
-        previos_sorted_objects = []   
-        if loaded_contnet is not None and len(loaded_contnet) != 0:
-            loaded_contnet = self.delete_old_records_in_histry(loaded_contnet,  self.ctx.get_history_digging_days())  
-            loaded_contnet = self._filterContent(contents=loaded_contnet)
-            previos_sorted_objects = Helper.sort_content_by_date(loaded_contnet)     
-
-        self.ctx.set_main_content(previos_sorted_objects) 
+            return
+        self.ctx.rehydrate_json(self.file_services_instance.Rehidrate_from_file(Constants.Parameters_file_name))   
+        for key, data in  self.ctx.MainParameters.get_dict().items():            
+            rehidrated_content = self.file_services_instance.Rehidrate_from_file(Constants.History_file_name(self.ctx.MainParameters.get_SearchGuid(key)))
+            if rehidrated_content is None:
+                rehidrated_content = []
+            # self.ctx.MainParameters.set_content(key, rehidrated_content)          
+            content = self.ctx.MainParameters.get_parameter_byKey(key)._content
+            content_date = self._delete_old_records_in_histry(content, self.ctx.MainParameters.get_history_digging_days())
+            content_date_filtred = self._filterContent(content_date, key)
+            content_date_filtred_sorted = Helper.sort_content_by_date(content_date_filtred)
+            self.ctx.MainParameters.set_content(key, content_date_filtred_sorted)
         self.ctx.set_context_rehydrate_state(True)     
-        return previos_sorted_objects
     
-    def get_content(self):   
-        previos_sorted_objects = self.ctx.get_main_content()    
-        if(self.ctx.get_updated_paramter_status()):
-            previos_sorted_objects= self._filterContent(contents=previos_sorted_objects)
-            self.ctx.set_updated_paramter_status(False)
-            self.ctx.set_main_content(previos_sorted_objects)    
-     
-        new_content_array = self.load_content(previos_sorted_objects)             
-        #Filter new content section
-       
-        new_content_array = self._filterContent(contents=new_content_array)
+    def Download_content(self, force = False):   
+        #Start
+        changing_exist = []
+        if(self.ctx.get_updated_paramter_status() or force):
+            for key, data in  self.ctx.MainParameters.get_dict().items():   
+                content_filtred = self._filterContent(data._content, key)
+                content_filtred_sorted = Helper.sort_content_by_date(content_filtred)
+              
+                #ToDo Async
+                downloaded_content = self.load_content(sorted_objects=content_filtred_sorted, key=key)
+                downloaded_content_filtred = self._filterContent(downloaded_content, key)
+                
+                diff_in_content = Helper.find_differences_in_array(downloaded_content_filtred, content_filtred_sorted)
+                if len(diff_in_content) > 0:
+                    final_content = self.file_services_instance.Merge_content(content_filtred_sorted, downloaded_content_filtred)
+                    self.file_services_instance.Download_missed_photos(final_content)
+                    self.file_services_instance.Save_content_to_file(final_content, Constants.History_file_name(data._searchGuid))
+                    merged_content = self.file_services_instance.Merge_content(self.ctx.MainParameters.get_content(key), final_content)
+                    self.ctx.MainParameters.set_content(key, Helper.sort_content_by_date(merged_content, reversed = True))
+                    changing_exist.append(diff_in_content)
+            self.ctx.set_updated_paramter_status(False) 
 
-        if len( Helper.find_differences_in_array(new_content_array, previos_sorted_objects) ) > 0:
-            finalContent = self.file_services_instance.Merge_content(previos_sorted_objects, new_content_array)
-            self.file_services_instance.Save_content_to_file(finalContent, Constants.History_file_name)        
-            self.file_services_instance.Delete_old_files(finalContent)
-            self.file_services_instance.Download_missed_photos(finalContent)
-            previos_sorted_objects = finalContent
-            self.ctx.set_main_content(Helper.sort_content_by_date(previos_sorted_objects, reversed = True))
+        if any(changing_exist):
+            all_content = self.ctx.MainParameters.get_all_content()       
+            self.file_services_instance.Delete_old_images(all_content)
 
-        return previos_sorted_objects
+        uuids = []
+        if len(self.ctx.MainParameters.get_dict()) != 0:            
+            uuids = [obj._searchGuid for obj in self.ctx.MainParameters.get_dict().values()]
+        self.file_services_instance.Delete_old_historys(uuids)
+        return any(changing_exist)
 
-    def _filterContent(self, contents):
+    def _filterContent(self, contents, key):
+
         return self.filtering_services_instance.filteringContent(contents=contents,
-                                                                            titlePatern=Helper.split_string(self.ctx.get_search_text()),
-                                                                            isDiscriptionCheck= self.ctx.get_content_filter_checkBox() == Constants.CheackBox_enabled_status,
-                                                                            discriptionPatern=Helper.split_string(self.ctx.get_content_filter_text()),
-                                                                            isPriceCheck=self.ctx.get_price_filter_checkbox() == Constants.CheackBox_enabled_status,
-                                                                            priceRange=[self.ctx.get_price_limit_from(),self.ctx.get_price_limit_to()])
+                                                                            titlePatern=Helper.split_string(self.ctx.MainParameters.get_search_text(key)),
+                                                                            isDiscriptionCheck= self.ctx.MainParameters.get_content_filter_checkBox(key) == Constants.CheackBox_enabled_status,
+                                                                            discriptionPatern=Helper.split_string(self.ctx.MainParameters.get_content_filter_text(key)),
+                                                                            isPriceCheck=self.ctx.MainParameters.get_price_filter_checkbox(key) == Constants.CheackBox_enabled_status,
+                                                                            priceRange=[self.ctx.MainParameters.get_price_limit_from(key),
+                                                                            self.ctx.MainParameters.get_price_limit_to(key)])
 
+    def _syncContentWithSettings(self, contents_dicts):
+        result = {} 
+        for key, data in self.ctx.MainParameters.get_dict().items():       
+            if key in contents_dicts:
+                result[key] = contents_dicts[key]
+        return result
 
-    def content_is_older_than(self, date_str, days):
+    def _content_is_older_than(self, date_str, days):
         date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         time_difference = datetime.now(date_object.tzinfo) - date_object
         return time_difference.days > days
     
-    def delete_old_records_in_histry(self, contents, days):
-        if contents is None or len(contents) == 0:      
-            return None
-        for content in contents:  
+    def _delete_old_records_in_histry(self, contents, days):
+        filtred_content = []
+        if len(contents) == 0:
+            return filtred_content
+       
+        for content in contents:
             date_object = content['creation_date']
-            if(self.content_is_older_than(date_object, days)):
-                contents.remove(content)
-        return contents
+            if(not self._content_is_older_than(date_object, days)):
+                filtred_content.append(content)
+        return filtred_content
     
-    def load_content(self, sorted_objects):
+    def load_content(self, sorted_objects, key):
         # if __debug__:
-        #     return self.file_services_instance.Rehidrate_from_file('sample_content')
+        #     return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
         previos_atempt_sucseed = True
+        api_error_occurred = False
 
         graberServices_instance = GraberServices()
-        self.target_list = self.ctx.get_search_text().split(Constants.SearchString_Siparator)    
-        #dip_limit = 500
+        self.target_list = self.ctx.MainParameters.get_search_text(key).split(Constants.SearchString_Siparator)    
+        dip_limit = 100
         new_content_array = []
         index = 1        
         while True:
             new_content = []
-            if self.ctx.get_search_type() == Constants.SearchType.Direct_search:
-                for target in self.target_list:  
-                    new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
-            else: 
-                new_content = self.get_from_last_content(graberServices_instance, index)
+            try:
+                if self.ctx.MainParameters.get_search_type(key) == Constants.SearchType.Direct_search:
+                    for target in self.target_list:  
+                        new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
+                else: 
+                    new_content = self.get_from_last_content(graberServices_instance, index)
+            except APIConnectionError:
+                # Consider logging the error here e.g. print(f"APIConnectionError occurred while fetching content for key {key}")
+                api_error_occurred = True
+                break # Exit the while loop if API error occurs
           
             new_content_array += new_content
             index = index + 1        
             
-            if len(self.response['search_objects']) == 0:
+            # The 'self.response' might not be set if an API error occurred before the first successful call in the loop.
+            # Or if new_content is empty due to API error in one of the calls within the loop for Direct_search.
+            if api_error_occurred and not new_content: # If an error occurred and we got no new items in this iteration.
+                 pass # api_error_occurred flag will handle this after loop
+            elif 'search_objects' not in self.response or len(self.response['search_objects']) == 0 : # Check if response has search_objects
                 if not previos_atempt_sucseed:                   
                     break
                 previos_atempt_sucseed = False
 
-            # if index > dip_limit:
-            #     break               
+            if index > dip_limit:
+                 break               
 
-            if len(new_content) > 0:
+            if len(new_content) > 0: # This check should be if new_content was successfully populated
                 new_sorted_content =  Helper.sort_content_by_date(new_content)  
-                new_content_reachedLimit = self.content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.get_history_digging_days())
+                new_content_reachedLimit = self._content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.MainParameters.get_history_digging_days())
                 if new_content_reachedLimit:
                     break
                 if not sorted_objects is None and len(sorted_objects) > 0:    
                     if datetime.fromisoformat(sorted_objects[0]['modification_date']) >=  datetime.fromisoformat(new_sorted_content[-1]['modification_date']):
                         break
+            elif not previos_atempt_sucseed and not api_error_occurred : # if no new content and no error, and it's the second attempt
+                break
+
+
+        if api_error_occurred or not new_content_array:
+            self.rehydrate_contnet(offline_error=True)
+            # Return empty list or previously sorted_objects if API error, 
+            # as new_content_array might be incomplete or empty.
+            # This depends on desired behavior: either return old data or signal error upstream.
+            # For now, returning existing new_content_array (which could be empty).
+            
         return new_content_array             
 
     def get_from_last_content(self, graberServices, index):
+        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
         self.response = graberServices.GetReposne(request_param=graberServices.SetParam(index * 40))
         new_content = graberServices.ParseResults(self.response, self.target_list) 
         return new_content
     
     def get_from_directsearch_content(self, graberServices, index, target_text):        
+        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
         step = index * Constants.Items_per_rotation
         self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index,  step - Constants.Items_per_rotation, step))
         new_content = graberServices.ParseResults(self.response, None) 
         return new_content   
-
+    
   
