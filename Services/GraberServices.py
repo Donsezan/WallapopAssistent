@@ -70,7 +70,7 @@ class GraberServices:
     def  GetReposne(self, request_param):  
         if request_param is None:
              request_param = self.parameters
-        response = requests.get(self.searchPath, headers=self.headers, params=request_param)
+        # Removed the first redundant call to requests.get
         try:
             response = requests.get(self.searchPath, headers=self.headers, params=request_param)
             response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code      

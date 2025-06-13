@@ -37,8 +37,11 @@ class FiltersServices:
     #         filtered_contents += [obj for obj in contents if regex_pattern.match(obj[key].lower())]
     #     return filtered_contents
     
-    def _filter_content_by_price(self, contents, prices):       
-        filtered_data = [obj for obj in contents if float(prices[0]) <= float(obj.get('price', '0')) <= float(prices[1])]
+    def _filter_content_by_price(self, contents, price_range_dict): # Renamed 'prices' to 'price_range_dict' for clarity
+        min_price = float(price_range_dict.get('min', 0))
+        max_price = float(price_range_dict.get('max', float('inf'))) # Default max to infinity if not present
+
+        filtered_data = [obj for obj in contents if min_price <= float(obj.get('price', '0')) <= max_price]
         return filtered_data
 
     

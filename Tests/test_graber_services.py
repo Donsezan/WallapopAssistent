@@ -9,8 +9,7 @@ import os
 # This assumes 'Tests' and 'Services' are sibling directories or 'Services' is discoverable
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Services.GraberServices import GraberServices
-# APIConnectionError is removed, requests.exceptions will be checked directly
+from Services.GraberServices import GraberServices, APIConnectionError # Import APIConnectionError
 from constants import Constants # GraberServices uses Constants in __init__
 
 class TestGraberServices(unittest.TestCase):
@@ -49,11 +48,11 @@ class TestGraberServices(unittest.TestCase):
         # Configure the mock to raise ConnectionError
         mock_requests_get.side_effect = requests.exceptions.ConnectionError("Test connection error")
 
-        # Assert that requests.exceptions.ConnectionError is raised (as it's re-raised directly)
-        with self.assertRaises(requests.exceptions.ConnectionError) as context:
+        # Assert that APIConnectionError is raised (as GraberServices wraps ConnectionError)
+        with self.assertRaises(APIConnectionError) as context:
             self.graber_service.GetReposne(request_param={})
 
-        self.assertTrue("Test connection error" in str(context.exception)) # Check original error message
+        self.assertTrue("API connection error: Test connection error" in str(context.exception))
         mock_requests_get.assert_called_once_with(
             self.graber_service.searchPath,
             headers=self.graber_service.headers,
@@ -71,17 +70,18 @@ class TestGraberServices(unittest.TestCase):
         )
         mock_requests_get.return_value = mock_response
 
-        # Assert that requests.exceptions.HTTPError is raised (as it's re-raised directly)
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        # Assert that APIConnectionError is raised
+        with self.assertRaises(APIConnectionError) as context:
             self.graber_service.GetReposne(request_param={})
 
         self.assertTrue("Server Error" in str(context.exception)) # Check original error message
+        self.assertTrue("API request failed with status 500" in str(context.exception))
         mock_requests_get.assert_called_once_with(
             self.graber_service.searchPath,
             headers=self.graber_service.headers,
             params={}
         )
-        mock_response.raise_for_status.assert_called_,once()
+        mock_response.raise_for_status.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()
