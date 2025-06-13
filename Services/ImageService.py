@@ -6,7 +6,7 @@ class ImageService:
     def SavePhotofromWeb(url, file_name, temp_folder="temp"):
          # Ensure the temp folder exists
         if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
+            os.makedirs(temp_folder, exist_ok=True) # <--- MODIFIED HERE
 
         # Generate a unique ID for the file      
         if not file_name:

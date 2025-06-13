@@ -6,6 +6,7 @@ from Services.ImageService import ImageService
 class FileServices:
     def __init__(self):
             self.temp_folder = "temp"
+            self.imageService = ImageService() # Initialize ImageService instance
 
     def Save_content_to_file(self, data, file_name):
         if data is None or len(data) == 0:
@@ -103,7 +104,8 @@ class FileServices:
                 file_path = os.path.join(self.temp_folder, content['web_slug']+".jpg")            
                 if not os.path.exists(file_path): 
                     xsmall_image_link = content['images'][0]['xsmall'].split('?', 1)[0]
-                    ImageService.SavePhotofromWeb(xsmall_image_link, content['web_slug'])
+                    # Call SavePhotofromWeb on the instance attribute self.imageService
+                    self.imageService.SavePhotofromWeb(xsmall_image_link, content['web_slug'])
 
     
 
