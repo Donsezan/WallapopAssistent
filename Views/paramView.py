@@ -25,7 +25,7 @@ class ParamView():
         self.rootFrame = root   
         global_padx = 20       
         ### Create and use temp parameter dictionary before save
-        self.ctx.TempParameters.overide_dict(self.ctx.MainParameters.get_dict())
+        self.ctx.TempParameters = self.ctx.MainParameters
 
         self.auto_refresh_checkbox_var = customtkinter.StringVar(value=self.ctx.TempParameters.get_auto_refresh_checkbox())      
         self.notification_toastup_checkbox_var = customtkinter.StringVar(value=self.ctx.TempParameters.get_notification_toastup_checkbox())
