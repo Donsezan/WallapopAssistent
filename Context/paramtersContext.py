@@ -98,6 +98,16 @@ class ParamtersContext(SearchContentDetails):
     def set_price_limit_to(cls, dict_name, value):
         Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)   
         cls.ParamtersStructure.parameter_dict[dict_name]._price_limit_to = value
+
+    @classmethod
+    def get_dip_limit(cls, dict_name):
+        Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)
+        return int(cls.ParamtersStructure.parameter_dict[dict_name]._dip_limit)
+
+    @classmethod
+    def set_dip_limit(cls, dict_name, value):
+        Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)
+        cls.ParamtersStructure.parameter_dict[dict_name]._dip_limit = value
         
     @classmethod
     def get_refresh_time(cls):
@@ -165,7 +175,8 @@ class ParamtersContext(SearchContentDetails):
     def set_content(cls, dict_name, value):
         Helper._validationForKey(cls.ParamtersStructure.parameter_dict, dict_name)   
         cls.ParamtersStructure.parameter_dict[dict_name]._content = value
-  
+
+    # ParamtersStructure does not need dip_limit, as it's part of SearchContentDetails
     class ParamtersStructure:
         history_digging_days = int
         notification_toastup_checkbox = str
