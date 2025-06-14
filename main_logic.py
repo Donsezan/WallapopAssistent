@@ -81,92 +81,155 @@ class Main_logic:
         return result
 
     def _content_is_older_than(self, date_str, days):
-        date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+        try:
+            # Attempt to parse with fromisoformat, which is more general for ISO 8601
+            # Wallapop dates are often like "2023-10-12T18:30:00Z" or similar
+            if date_str.endswith('Z'): # fromisoformat handles 'Z' correctly in Python 3.7+
+                 date_object = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else: # If it has timezone offset already
+                date_object = datetime.fromisoformat(date_str)
+        except ValueError:
+            # Fallback or re-raise if format is unexpected
+            # This specific format was from original code, might be for 'creation_date'
+            date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+
         time_difference = datetime.now(date_object.tzinfo) - date_object
         return time_difference.days > days
     
     def _delete_old_records_in_histry(self, contents, days):
+        # This method seems to operate on 'creation_date', ensure this field exists or adapt
         filtred_content = []
-        if len(contents) == 0:
+        if not contents: # More pythonic check for empty list
             return filtred_content
        
-        for content in contents:
-            date_object = content['creation_date']
-            if(not self._content_is_older_than(date_object, days)):
-                filtred_content.append(content)
+        for content_item in contents: # Renamed 'content' to 'content_item' to avoid conflict
+            # Ensure 'creation_date' exists in content_item; use 'modification_date' if that's the standard
+            date_to_check = content_item.get('creation_date') # Or 'modification_date'
+            if date_to_check and not self._content_is_older_than(date_to_check, days):
+                filtred_content.append(content_item)
         return filtred_content
     
     def load_content(self, sorted_objects, key):
-        # if __debug__:
-        #     return self.file_services_instance.Rehidrate_from_file('Sample-History.json')
-        previos_atempt_sucseed = True
-        api_error_occurred = False
-
         graberServices_instance = GraberServices()
-        self.target_list = self.ctx.MainParameters.get_search_text(key).split(Constants.SearchString_Siparator)    
-        dip_limit = 100
+        search_text = self.ctx.MainParameters.get_search_text(key)
+        self.target_list = search_text.split(Constants.SearchString_Siparator)
+
         new_content_array = []
-        index = 1        
-        while True:
-            new_content = []
-            try:
-                if self.ctx.MainParameters.get_search_type(key) == Constants.SearchType.Direct_search:
-                    for target in self.target_list:  
-                        new_content += self.get_from_directsearch_content(graberServices_instance, index, target)
-                else: 
-                    new_content = self.get_from_last_content(graberServices_instance, index)
-            except APIConnectionError:
-                # Consider logging the error here e.g. print(f"APIConnectionError occurred while fetching content for key {key}")
-                api_error_occurred = True
-                break # Exit the while loop if API error occurs
-          
-            new_content_array += new_content
-            index = index + 1        
+        api_error_for_any_target = False
+
+        dip_limit_from_params = self.ctx.MainParameters.get_dip_limit(key)
+        # Default to a large number if dip_limit is 0 or None, effectively fetching "all" based on other conditions.
+        # Or set to None if get_all_results_for_keywords handles None as "no limit".
+        # Assuming Constants.Items_per_rotation is defined, e.g., 40.
+        max_items_to_fetch = None
+        if dip_limit_from_params is not None and dip_limit_from_params > 0:
+            max_items_to_fetch = dip_limit_from_params * Constants.Items_per_rotation
+        elif dip_limit_from_params == 0: # Explicitly 0 might mean fetch nothing or fetch all
+             max_items_to_fetch = None # Fetch all if 0 means no page limit. Or set to 0 if it means 0 items. Let's assume fetch all.
+
+
+        search_type = self.ctx.MainParameters.get_search_type(key)
+
+        try:
+            if search_type == Constants.SearchType.Direct_search:
+                for target_keyword in self.target_list:
+                    # max_results here applies per keyword
+                    current_target_content = graberServices_instance.get_all_results_for_keywords(
+                        keywords=target_keyword,
+                        target_list=None, # For direct search, ParseResults was called with None
+                        max_results=max_items_to_fetch
+                    )
+                    if not current_target_content and not getattr(graberServices_instance, 'search_id', None):
+                        print(f"Warning: API call for keyword '{target_keyword}' might have failed or returned no results and no search_id.")
+                        api_error_for_any_target = True
+                    new_content_array.extend(current_target_content)
+            else: # History search type (or any other type)
+                # max_results here applies to the whole query
+                fetched_content = graberServices_instance.get_all_results_for_keywords(
+                    keywords=search_text,
+                    target_list=self.target_list, # For history, ParseResults used self.target_list
+                    max_results=max_items_to_fetch
+                )
+                if not fetched_content and not getattr(graberServices_instance, 'search_id', None):
+                    print(f"Warning: API call for search_text '{search_text}' might have failed or returned no results and no search_id.")
+                    api_error_for_any_target = True
+                new_content_array.extend(fetched_content) # Use extend in case future versions return multiple lists
+
+        except APIConnectionError as e:
+            print(f"APIConnectionError occurred during content loading for key {key}: {e}")
+            api_error_for_any_target = True
+            # new_content_array will contain whatever was fetched before the error
+
+        # Deduplicate new_content_array if items might not be unique (e.g. from multiple keyword searches in direct)
+        # This requires items to be hashable or a custom deduplication based on ID
+        unique_new_items = []
+        seen_ids = set()
+        for item in new_content_array:
+            item_id = item.get('id') # Assuming items have an 'id' field
+            if item_id and item_id not in seen_ids:
+                unique_new_items.append(item)
+                seen_ids.add(item_id)
+            elif not item_id: # If no ID, keep it, can't deduplicate
+                 unique_new_items.append(item)
+        new_content_array = unique_new_items
+
+        # Sort all newly fetched content by modification_date (descending - newest first)
+        # This is crucial for the date-based filtering logic that follows.
+        if new_content_array:
+            # Ensure 'modification_date' is present and valid for sorting
+            # Helper.sort_content_by_date might need to handle items missing this key
+            new_content_array = Helper.sort_content_by_date(new_content_array, reversed=True)
+
+        # Filter by date relative to history_digging_days and avoid duplicates with existing sorted_objects
+        final_results_to_return = []
+        if new_content_array:
+            history_digging_days = self.ctx.MainParameters.get_history_digging_days()
             
-            # The 'self.response' might not be set if an API error occurred before the first successful call in the loop.
-            # Or if new_content is empty due to API error in one of the calls within the loop for Direct_search.
-            if api_error_occurred and not new_content: # If an error occurred and we got no new items in this iteration.
-                 pass # api_error_occurred flag will handle this after loop
-            elif 'search_objects' not in self.response or len(self.response['search_objects']) == 0 : # Check if response has search_objects
-                if not previos_atempt_sucseed:                   
-                    break
-                previos_atempt_sucseed = False
+            # Assuming sorted_objects is already sorted newest first.
+            latest_existing_item_date = None
+            if sorted_objects and len(sorted_objects) > 0 and 'modification_date' in sorted_objects[0]:
+                try:
+                    latest_existing_item_date = datetime.fromisoformat(sorted_objects[0]['modification_date'].replace('Z', '+00:00'))
+                except ValueError:
+                     print(f"Warning: Could not parse modification_date for existing item: {sorted_objects[0]['modification_date']}")
 
-            if index > dip_limit:
-                 break               
 
-            if len(new_content) > 0: # This check should be if new_content was successfully populated
-                new_sorted_content =  Helper.sort_content_by_date(new_content)  
-                new_content_reachedLimit = self._content_is_older_than(new_sorted_content[-1]['modification_date'], self.ctx.MainParameters.get_history_digging_days())
-                if new_content_reachedLimit:
-                    break
-                if not sorted_objects is None and len(sorted_objects) > 0:    
-                    if datetime.fromisoformat(sorted_objects[0]['modification_date']) >=  datetime.fromisoformat(new_sorted_content[-1]['modification_date']):
+            for item in new_content_array:
+                if 'modification_date' not in item:
+                    # If an item has no modification_date, we might want to include it or skip it.
+                    # For now, let's include it if other conditions pass, or it will fail at date parsing.
+                    # Or, ensure all items have this field from GraberServices.ParseResults.
+                    final_results_to_return.append(item) # Or skip: continue
+                    continue
+
+                try:
+                    # Adapt date parsing to handle potential 'Z' for UTC
+                    item_modification_date_str = item['modification_date']
+                    if item_modification_date_str.endswith('Z'):
+                        item_date_obj = datetime.fromisoformat(item_modification_date_str.replace('Z', '+00:00'))
+                    else:
+                        item_date_obj = datetime.fromisoformat(item_modification_date_str)
+
+                    if self._content_is_older_than(item_modification_date_str, history_digging_days):
+                        # Item is older than history_digging_days, so we stop processing further (list is sorted)
                         break
-            elif not previos_atempt_sucseed and not api_error_occurred : # if no new content and no error, and it's the second attempt
-                break
 
+                    if latest_existing_item_date and item_date_obj <= latest_existing_item_date:
+                        # Item is older than or same as the newest item already present in sorted_objects.
+                        # All subsequent items in new_content_array will also be older/same.
+                        # This acts as a "stop if reached already seen content" mechanism.
+                        break
 
-        if api_error_occurred or not new_content_array:
-            self.rehydrate_contnet(offline_error=True)
-            # Return empty list or previously sorted_objects if API error, 
-            # as new_content_array might be incomplete or empty.
-            # This depends on desired behavior: either return old data or signal error upstream.
-            # For now, returning existing new_content_array (which could be empty).
+                    final_results_to_return.append(item)
+                except ValueError as ve:
+                    print(f"Warning: Could not parse modification_date for new item: {item.get('modification_date')}. Error: {ve}")
+                    # Decide whether to include items with unparseable dates or skip them
+                    # final_results_to_return.append(item) # Option to include
+            new_content_array = final_results_to_return
             
-        return new_content_array             
+        if api_error_for_any_target and not new_content_array:
+            self.rehydrate_contnet(offline_error=True)
+            return []
 
-    def get_from_last_content(self, graberServices, index):
-        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
-        self.response = graberServices.GetReposne(request_param=graberServices.SetParam(index * 40))
-        new_content = graberServices.ParseResults(self.response, self.target_list) 
-        return new_content
-    
-    def get_from_directsearch_content(self, graberServices, index, target_text):        
-        # This method implicitly uses self.response, which needs to be handled carefully if GetReposne fails.
-        step = index * Constants.Items_per_rotation
-        self.response = graberServices.GetReposne(request_param=graberServices.SetParam_for_direct(target_text, index,  step - Constants.Items_per_rotation, step))
-        new_content = graberServices.ParseResults(self.response, None) 
-        return new_content   
-    
+        return new_content_array
   

@@ -49,11 +49,13 @@ class Context():
             parameter_dict_serialized[key] = {
             "search_type": Helper.remove_newline_symbol(value._search_type),            
             "search_text": Helper.remove_newline_symbol(value._search_text),
-            "content_filter_checBox": value._content_filter_checkBox,
+            # Using SearchContentDetails.Fields for consistency
+            SearchContentDetails.Fields.Content_filter_checkBox: value._content_filter_checkBox,
             "content_filter_text": Helper.remove_newline_symbol(value._content_filter_text),
             "price_filter_checkbox": value._price_filter_checkbox,
-            "price_limit_from": Helper.remove_newline_symbol(value._price_limit_from),
-            "price_limit_to": Helper.remove_newline_symbol(value._price_limit_to)       
+            "price_limit_from": Helper.remove_newline_symbol(str(value._price_limit_from)), # ensure string
+            "price_limit_to": Helper.remove_newline_symbol(str(value._price_limit_to)), # ensure string
+            SearchContentDetails.Fields.Dip_limit: value._dip_limit
             }        
         json_data = {
             "history_digging_days": cls.MainParameters.get_history_digging_days(),
@@ -84,7 +86,8 @@ class Context():
                 cls.MainParameters.set_price_filter_checkbox(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_filter_checkbox, Constants.Buttons.Button_disable_status))
                 cls.MainParameters.set_price_limit_from(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_from, 0))
                 cls.MainParameters.set_price_limit_to(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_to, 99999))
-                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.SearchGuid_, str(uuid.uuid4())))
+                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.SearchGuid, str(uuid.uuid4()))) # Corrected SearchGuid_
+                cls.MainParameters.set_dip_limit(key, cls._get_parameter(value, SearchContentDetails.Fields.Dip_limit, 0))
         cls.set_context_rehydrate_state(True)
     
     def _get_parameter(data, key, default):
@@ -97,10 +100,22 @@ class Context():
         return result
 
     class MainParameters(ParamtersContext):
-        pass
+        class ParamtersStructure:
+            history_digging_days = int
+            notification_toastup_checkbox = str
+            notification_soundnote_checkbox = str
+            refresh_result = int
+            auto_refresh_checkbox = str
+            parameter_dict = {}
 
     class TempParameters(ParamtersContext):
-        pass
+        class ParamtersStructure:
+            history_digging_days = int
+            notification_toastup_checkbox = str
+            notification_soundnote_checkbox = str
+            refresh_result = int
+            auto_refresh_checkbox = str
+            parameter_dict = {}
 
     class Fields:
         Parameter_dict = "parameter_dict"
