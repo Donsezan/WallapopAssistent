@@ -6,7 +6,7 @@ import sys
 from unittest.mock import patch, mock_open, MagicMock
 
 # Add project root to sys.path to allow importing from Services
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'temp'))
 sys.path.insert(0, project_root)
 
 from Services.FileServices import FileServices
