@@ -103,9 +103,9 @@ class FileServices:
             for content in contents:   
                 file_path = os.path.join(self.temp_folder, content['web_slug']+".jpg")            
                 if not os.path.exists(file_path): 
-                    xsmall_image_link = content['images'][0]['xsmall'].split('?', 1)[0]
+                    small_image_link = content['images'][0]['urls']['small'].split('?', 1)[0]
                     # Call SavePhotofromWeb on the instance attribute self.imageService
-                    self.imageService.SavePhotofromWeb(xsmall_image_link, content['web_slug'])
+                    self.imageService.SavePhotofromWeb(small_image_link , content['web_slug'])
 
     
 

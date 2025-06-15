@@ -31,7 +31,7 @@ class App(customtkinter.CTk):
         self.current_frame = None
 
         self.title("Wallapop assistent")
-        self.geometry("800x600")
+        self.geometry("1000x600")
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)

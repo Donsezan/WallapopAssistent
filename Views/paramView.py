@@ -120,7 +120,7 @@ class ParamView():
                 self.ctx.TempParameters.set_content(key, content_filtred)
         
         ### Set back to main content
-        self.ctx.MainParameters.overide_dict(self.ctx.TempParameters.get_dict())
+        self.ctx.MainParameters = self.ctx.TempParameters
         self.file_services_instance.Save_content_to_file(self.ctx.to_json(), Constants.Parameters_file_name)
        
     def auto_refresh_checkbox_event(self):

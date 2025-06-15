@@ -35,7 +35,7 @@ class Helper:
         return re.split(r'[,\s]+', text)
      
      def sort_content_by_date(content, reversed = True):
-        return sorted(content, key=lambda x: datetime.strptime(x['creation_date'], '%Y-%m-%dT%H:%M:%S.%f%z'), reverse=reversed)
+        return sorted(content, key=lambda x: x['modified_at'], reverse=reversed)
      
      def getByKey(dictionary, key):
         return dictionary.get(key, None)

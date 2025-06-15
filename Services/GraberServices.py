@@ -29,74 +29,47 @@ class GraberServices:
     def __init__(self):
             self.device_id = GraberServices.generate_application_device_id()
             self.search_id = None # Initialize search_id
-            self.searchPath = Constants.Direct_search_path # Retained for now, though new methods use specific URLs
+            self.was_initial_attempt = False
             self.headers = {
                 "Accept": "application/json, text/plain, */*",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
-                "Cache-Control": "no-cache",
-                "Deviceos": "2",
-                "Pragma": "no-cache",
-                "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+                "Accept-Encoding": "gzip, deflate, br, zstd",
+                "Accept-Language": "es,en;q=0.9",
+                "Connection": "keep-alive",
+                "Deviceos": "0",
+                "Dnt": "1",
+                "Host": "api.wallapop.com",
+                "Origin": "https://es.wallapop.com",
+                "Referer": "https://es.wallapop.com/",
+                "Sec-Ch-Ua": '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
                 "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Linux"',
+                "Sec-Ch-Ua-Platform": '"Windows"',
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                "X-Appversion": "7.10.0",
-                "X-Deviceid": self.device_id, # Using the generated device_id
-                "X-Devicemodel": "sdk_gphone64_x86_64",
-                "X-Deviceosversion": "33",
-                "X-Platform": "2",
-                "Origin": "https://es.wallapop.com",
-                "Referer": "https://es.wallapop.com/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+                "X-Appversion": "86720",
+                "X-Deviceid": self.device_id,
+                "X-Deviceos": "0"
             }
             self.parameters = {
-                # 'user_province': 'Madrid',
-                # 'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
-                'latitude': '36.6563536',
-                'start': '0',
-                'user_region': 'Comunidad de Madrid',
-                # 'user_city': 'Poligono Industrial Aimayr',
-                # 'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
-                'country_code': 'ES',
-                'user_postal_code': '29004',
-                'items_count': '40',
-                'filters_source': 'quick_filters',
-                # 'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                'order_by': 'newest',
-                'step': '0',
-                # 'category_ids': '15000',
-                'longitude': '-3.646063',
-                # 'category_ids': '15000', # Example: ensure this is in your self.parameters if used
+                # # 'user_province': 'Madrid',
+                # # 'internal_search_id': 'a16035f8-fb4b-4967-9676-e9baaa2a0a48',
+                # 'latitude': '36.6563536',
+                # 'start': '0',
+                # 'user_region': 'Comunidad de Madrid',
+                # # 'user_city': 'Poligono Industrial Aimayr',
+                # # 'search_id': '5ce64549-e8d1-4275-9f7a-4eb79fbae9f4',
+                # 'country_code': 'ES',
+                # 'user_postal_code': '29004',
+                # 'items_count': '40',
+                # 'filters_source': 'quick_filters',
+                # # 'pagination_date': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                # 'order_by': 'newest',
+                # 'step': '0',
+                # # 'category_ids': '15000',
+                # 'longitude': '-3.646063',
+                # # 'category_ids': '15000', # Example: ensure this is in your self.parameters if used
             }              
-    def SetParam(self, start_value):
-        """
-        DEPRECATED: This method is for an older search mechanism and is not used
-        by the v3 search flow implemented via search_initial and fetch_next_page.
-        The 'start' parameter is now handled by pagination tokens.
-        """
-        val = {
-            'start': str(start_value)            
-        }   
-        return self.parameters.update(val)
-    
-    def SetParam_for_direct(self, value, step, start_items_count, end_items_count):
-        """
-        DEPRECATED: This method is for an older search mechanism.
-        Keywords, pagination, and result counts are handled by
-        get_all_results_for_keywords, search_initial, and fetch_next_page
-        in the v3 search flow.
-        """
-        val = {           
-            'start': str(start_items_count),
-            'keywords': str(value),
-            'step': str(step),
-            'items_count': str(end_items_count),
-        }   
-        return self.parameters.update(val)
-
     
     def _make_api_request(self, url, params=None, headers=None):
         _headers = headers if headers is not None else self.headers
@@ -116,7 +89,7 @@ class GraberServices:
             raise APIConnectionError(f"General API request error: {e}")
 
     def search_initial(self, keywords, **kwargs):
-        url = "https://api.wallapop.com/api/v3/search"
+        url = Constants.Direct_search_path
 
         # Start with essential, non-overridable params
         params = {
@@ -131,12 +104,12 @@ class GraberServices:
             'items_count', 'filters_source'
         ]
 
-        # Add defaults from self.parameters if not supplied directly in kwargs
-        for key in default_param_keys:
-            if key not in kwargs:  # Only consider if not explicitly passed by the caller
-                value = self.parameters.get(key)
-                if value is not None: # Only add if self.parameters has a non-None value for this key
-                    params[key] = value
+        # # Add defaults from self.parameters if not supplied directly in kwargs
+        # for key in default_param_keys:
+        #     if key not in kwargs:  # Only consider if not explicitly passed by the caller
+        #         value = self.parameters.get(key)
+        #         if value is not None: # Only add if self.parameters has a non-None value for this key
+        #             params[key] = value
 
         # Apply any overrides or additional params from kwargs
         # This will overwrite defaults if keys are present in kwargs
@@ -158,10 +131,9 @@ class GraberServices:
         if not self.search_id:
             raise ValueError("search_id is not set. Call search_initial first.")
         if not next_page_token:
-            # Consider if this should raise error or return empty/None
-            return None, None
+            raise ValueError("next_page_token is not set. Call search_initial first.")
 
-        url = f"https://api.wallapop.com/api/v3/search?next_page={next_page_token}&source=deep_link&search_id={self.search_id}"
+        url = f"{Constants.Direct_search_path}?next_page={next_page_token}&source=deep_link&search_id={self.search_id}"
 
         raw_response = self._make_api_request(url) # No specific params needed here, all in URL
         json_response = raw_response.json()
@@ -170,11 +142,11 @@ class GraberServices:
         return json_response, new_next_page_token
 
     def ParseResults(self, json_response, target_list): # Changed 'resonse' to 'json_response'
-        if not json_response or 'search_objects' not in json_response:
+        if not json_response or 'data' not in json_response:
             print("No search objects found in the response.")
             return []
 
-        products = json_response['search_objects']
+        products = json_response['data']['section']['payload']['items']
         results = []
         if target_list is not None and len(target_list) != 0:
             for product in products:
@@ -223,6 +195,9 @@ class GraberServices:
 
                 if next_page_json_response:
                     parsed_results = self.ParseResults(next_page_json_response, target_list)
+                    if parsed_results.count == 0:
+                        print("No results found in the next page.")
+                        break
                     all_products.extend(parsed_results)
                 else:
                     # If fetching next page yields nothing or token becomes None, stop

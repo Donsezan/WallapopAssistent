@@ -142,5 +142,5 @@ class SearchContentDetails:
         Price_filter_checkbox = "price_filter_checkbox"
         Price_limit_from = "price_limit_from"
         Price_limit_to = "price_limit_to"
-        SearchGuid = "searchGuid" # Removed trailing underscore
+        SearchGuid = "search_guid" # Removed trailing underscore
         Dip_limit = "dip_limit"

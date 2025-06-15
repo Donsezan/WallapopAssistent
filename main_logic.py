@@ -25,7 +25,7 @@ class Main_logic:
                 rehidrated_content = []
             # self.ctx.MainParameters.set_content(key, rehidrated_content)          
             content = self.ctx.MainParameters.get_parameter_byKey(key)._content
-            content_date = self._delete_old_records_in_histry(content, self.ctx.MainParameters.get_history_digging_days())
+            content_date = self._delete_old_records_in_history(content, self.ctx.MainParameters.get_history_digging_days())
             content_date_filtred = self._filterContent(content_date, key)
             content_date_filtred_sorted = Helper.sort_content_by_date(content_date_filtred)
             self.ctx.MainParameters.set_content(key, content_date_filtred_sorted)
@@ -96,7 +96,7 @@ class Main_logic:
         time_difference = datetime.now(date_object.tzinfo) - date_object
         return time_difference.days > days
     
-    def _delete_old_records_in_histry(self, contents, days):
+    def _delete_old_records_in_history(self, contents, days):
         # This method seems to operate on 'creation_date', ensure this field exists or adapt
         filtred_content = []
         if not contents: # More pythonic check for empty list
@@ -121,15 +121,17 @@ class Main_logic:
         # Default to a large number if dip_limit is 0 or None, effectively fetching "all" based on other conditions.
         # Or set to None if get_all_results_for_keywords handles None as "no limit".
         # Assuming Constants.Items_per_rotation is defined, e.g., 40.
-        max_items_to_fetch = None
-        if dip_limit_from_params is not None and dip_limit_from_params > 0:
-            max_items_to_fetch = dip_limit_from_params * Constants.Items_per_rotation
-        elif dip_limit_from_params == 0: # Explicitly 0 might mean fetch nothing or fetch all
-             max_items_to_fetch = None # Fetch all if 0 means no page limit. Or set to 0 if it means 0 items. Let's assume fetch all.
+        max_items_to_fetch = 10 # ToDo add logic to depends on the deging days from dip_limit_from_params
+        # if dip_limit_from_params is not None and dip_limit_from_params > 0:
+        #     max_items_to_fetch = dip_limit_from_params * Constants.Items_per_rotation
+        # elif dip_limit_from_params == 0: # Explicitly 0 might mean fetch nothing or fetch all
+        #      max_items_to_fetch = None # Fetch all if 0 means no page limit. Or set to 0 if it means 0 items. Let's assume fetch all.
 
 
         search_type = self.ctx.MainParameters.get_search_type(key)
 
+        #TODO: Add logic for handling different dict
+        raise NotImplementedError("This functionality is not yet implemented.")
         try:
             if search_type == Constants.SearchType.Direct_search:
                 for target_keyword in self.target_list:
