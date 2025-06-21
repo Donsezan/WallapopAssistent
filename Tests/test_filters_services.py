@@ -13,14 +13,14 @@ class TestFiltersServices(unittest.TestCase):
     def setUp(self):
         self.filters_services = FiltersServices()
         self.sample_contents = [
-            {"id": "1", "title": "Apple iPhone 13", "description": "Latest model smartphone with A15 Bionic chip.", "price": "799.00"},
-            {"id": "2", "title": "Samsung Galaxy S22", "description": "Android smartphone with great camera.", "price": "699.50"},
-            {"id": "3", "title": "Old Apple iPhone8", "description": "Used smartphone, good condition.", "price": "250.00"}, # No space for iphone*8
-            {"id": "4", "title": "Google Pixel6", "description": "Smartphone with pure Android experience.", "price": "599.00"}, # No space for pixel*
-            {"id": "5", "title": "Apple MacBook Pro 16", "description": "Powerful laptop for professionals.", "price": "1299.00"},
-            {"id": "6", "title": "Cheap Android Phone", "description": "Basic smartphone for calls and texts.", "price": "99.99"},
-            {"id": "7", "title": "Apple iPad Air", "description": "Tablet for entertainment and work.", "price": "499.00"}, # No digits in title
-            {"id": "8", "title": "Samsung TV Model T5000", "description": "Smart TV with 4K display.", "price": "350.00"}
+            {"id": "1", "title": "Apple iPhone 13", "description": "Latest model smartphone with A15 Bionic chip.","price": {"amount": 800.0,"currency": "EUR"}},
+            {"id": "2", "title": "Samsung Galaxy S22", "description": "Android smartphone with great camera.", "price": {"amount": 150.0,"currency": "EUR"}},
+            {"id": "3", "title": "Old Apple iPhone8", "description": "Used smartphone, good condition.", "price": {"amount": 70.0,"currency": "EUR"}}, # No space for iphone*8
+            {"id": "4", "title": "Google Pixel6", "description": "Smartphone with pure Android experience.", "price": {"amount": 99.99,"currency": "EUR"}}, # No space for pixel*
+            {"id": "5", "title": "Apple MacBook Pro 16", "description": "Powerful laptop for professionals.", "price": {"amount": 250.0,"currency": "EUR"}},
+            {"id": "6", "title": "Cheap Android Phone", "description": "Basic smartphone for calls and texts.", "price": {"amount": 15.9,"currency": "EUR"}},
+            {"id": "7", "title": "Apple iPad Air", "description": "Tablet for entertainment and work.", "price": {"amount": 0.01,"currency": "GBP"}}, # No digits in title
+            {"id": "8", "title": "Samsung TV Model T5000", "description": "Smart TV with 4K display.",  "price": {"amount": 300.0,"currency": "USD"}}
         ]
 
     def test_filtering_content_no_filters(self):
@@ -50,18 +50,18 @@ class TestFiltersServices(unittest.TestCase):
 
     def test_filtering_content_by_price(self):
         result = self.filters_services.filteringContent(self.sample_contents, [], "", ["100.00", "600.00"], isPriceCheck=True)
-        self.assertEqual(len(result), 4) # iPhone8 (250), Pixel6 (599), iPad Air (499), TV (350)
-        expected_ids = sorted(["3", "4", "7", "8"])
+        self.assertEqual(len(result), 3) # iPhone8 (250), Pixel6 (599), iPad Air (499), TV (350)
+        expected_ids = sorted(["2", "5", "8"])
         result_ids = sorted([item["id"] for item in result])
         self.assertEqual(result_ids, expected_ids)
         for item in result:
-            price = float(item["price"])
+            price = float(item["price"]["amount"])
             self.assertTrue(100.00 <= price <= 600.00)
 
     def test_filtering_content_by_price_exact_match(self):
         result = self.filters_services.filteringContent(self.sample_contents, [], "", ["99.99", "99.99"], isPriceCheck=True)
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["id"], "6")
+        self.assertEqual(result[0]["id"], "4")
 
     def test_filtering_content_by_price_outside_range(self):
         result = self.filters_services.filteringContent(self.sample_contents, [], "", ["1500.00", "2000.00"], isPriceCheck=True)
@@ -70,8 +70,8 @@ class TestFiltersServices(unittest.TestCase):
     def test_filtering_content_combined_filters(self):
         # Title "Apple", Description "smartphone", Price ["200.00", "800.00"]
         result = self.filters_services.filteringContent(self.sample_contents, ["Apple"], "smartphone", ["200.00", "800.00"], isDiscriptionCheck=True, isPriceCheck=True)
-        self.assertEqual(len(result), 2)
-        expected_ids = sorted(["1", "3"]) # Apple iPhone 13 (799), Old Apple iPhone8 (250)
+        self.assertEqual(len(result), 1)
+        expected_ids = sorted(["1"]) # Apple iPhone 13 (799), Old Apple iPhone8 (250)
         result_ids = sorted([item["id"] for item in result])
         self.assertEqual(result_ids, expected_ids)
 

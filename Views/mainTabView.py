@@ -23,9 +23,9 @@ class MainTabView:
         self.rootFrame.tabview.add("All")      
         self.fill_content_tab(self.rootFrame.tabview.tab("All"), self.ctx.MainParameters.get_all_content())
 
-        for param_key in self.ctx.TempParameters.get_dict():
+        for param_key in self.ctx.MainParameters.get_dict():
             self.rootFrame.tabview.add(param_key)      
-            content = self.ctx.TempParameters.get_content(param_key)
+            content = self.ctx.MainParameters.get_content(param_key)
             self.fill_content_tab(self.rootFrame.tabview.tab(param_key), content)
 
 
