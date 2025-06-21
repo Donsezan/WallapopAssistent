@@ -81,10 +81,6 @@ class Main_logic:
             if key in contents_dicts:
                 result[key] = contents_dicts[key]
         return result
-
-    def _content_is_older_than(self, date_str, days):
-        difference = datetime.now() - datetime.fromtimestamp(date_str/1000)
-        return difference.days > days
     
     def _delete_old_records_in_history(self, contents, days):
         # This method seems to operate on 'creation_date', ensure this field exists or adapt
@@ -94,8 +90,8 @@ class Main_logic:
        
         for content_item in contents: # Renamed 'content' to 'content_item' to avoid conflict
             # Ensure 'creation_date' exists in content_item; use 'modified_at' if that's the standard
-            date_to_check = content_item.get('modified_at') # Or 'modified_at'
-            if date_to_check and not self._content_is_older_than(date_to_check, days):
+            unix_date_to_check = content_item.get('modified_at') # Or 'modified_at'
+            if unix_date_to_check and not Helper.unix_data_is_older_than(unix_date_to_check, days):
                 filtred_content.append(content_item)
         return filtred_content
     
@@ -107,16 +103,7 @@ class Main_logic:
         new_content_array = []
         api_error_for_any_target = False
 
-        dip_limit_from_params = self.ctx.MainParameters.get_dip_limit(key)
-        # Default to a large number if dip_limit is 0 or None, effectively fetching "all" based on other conditions.
-        # Or set to None if get_all_results_for_keywords handles None as "no limit".
-        # Assuming Constants.Items_per_rotation is defined, e.g., 40.
-        max_items_to_fetch = 10 # ToDo add logic to depends on the deging days from dip_limit_from_params
-        # if dip_limit_from_params is not None and dip_limit_from_params > 0:
-        #     max_items_to_fetch = dip_limit_from_params * Constants.Items_per_rotation
-        # elif dip_limit_from_params == 0: # Explicitly 0 might mean fetch nothing or fetch all
-        #      max_items_to_fetch = None # Fetch all if 0 means no page limit. Or set to 0 if it means 0 items. Let's assume fetch all.
-
+        dip_limit_from_params = self.ctx.MainParameters.get_history_digging_days()
 
         search_type = self.ctx.MainParameters.get_search_type(key)
 
@@ -127,7 +114,7 @@ class Main_logic:
                     current_target_content = graberServices_instance.get_all_results_for_keywords(
                         keywords=target_keyword,
                         target_list=None, # For direct search, ParseResults was called with None
-                        max_results=max_items_to_fetch
+                        max_results=dip_limit_from_params
                     )
                     if not current_target_content and not getattr(graberServices_instance, 'search_id', None):
                         print(f"Warning: API call for keyword '{target_keyword}' might have failed or returned no results and no search_id.")
@@ -138,7 +125,7 @@ class Main_logic:
                 fetched_content = graberServices_instance.get_all_results_for_keywords(
                     keywords=search_text,
                     target_list=self.target_list, # For history, ParseResults used self.target_list
-                    max_results=max_items_to_fetch
+                    max_results=dip_limit_from_params
                 )
                 if not fetched_content and not getattr(graberServices_instance, 'search_id', None):
                     print(f"Warning: API call for search_text '{search_text}' might have failed or returned no results and no search_id.")
@@ -186,7 +173,7 @@ class Main_logic:
             for item in new_content_array:
                 try:
                     item_modification_date_str = item['modified_at']
-                    if self._content_is_older_than(item_modification_date_str, history_digging_days):
+                    if Helper.unix_data_is_older_than(item_modification_date_str, history_digging_days):
                         # Item is older than history_digging_days, so we stop processing further (list is sorted)
                         break
 

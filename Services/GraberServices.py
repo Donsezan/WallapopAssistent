@@ -2,6 +2,7 @@ import requests
 import random
 from datetime import datetime
 from constants import Constants
+from helper import Helper
 
 class APIConnectionError(Exception):
     """Custom exception for API connection errors."""
@@ -163,7 +164,7 @@ class GraberServices:
         print(f"Filtered results records: {len(results)}")
         return results
 
-    def get_all_results_for_keywords(self, keywords, target_list=None, max_results=None, **kwargs):
+    def get_all_results_for_keywords(self, keywords, target_list=None, max_results=1, **kwargs):
         """
         Retrieves all results for given keywords, handling pagination and optional filtering.
 
@@ -186,7 +187,7 @@ class GraberServices:
                 next_page_token = None
 
             while next_page_token:
-                if max_results is not None and len(all_products) >= max_results:
+                if max_results is not None and Helper.unix_data_is_older_than(min(obj["modified_at"] for obj in all_products),max_results):
                     print(f"Reached max_results limit of {max_results}. Stopping pagination.")
                     break
 

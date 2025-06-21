@@ -53,3 +53,7 @@ class Helper:
         else:       
             textbox.configure(state = customtkinter.NORMAL, fg_color= "red")   
             return False    
+                
+     def unix_data_is_older_than(unix_date_str, days):
+        difference = datetime.now() - datetime.fromtimestamp(unix_date_str/1000)
+        return difference.days > days
