@@ -19,7 +19,7 @@ This Python application allows users to monitor items on Wallapop, a popular onl
     *   Handles pagination to gather comprehensive results.
 
 *   **Local Caching & Offline Capability:**
-    *   Search parameters and fetched item data (including images) are stored locally.
+    *   Search parameters and fetched item data (including images).
     *   Allows browsing of previously fetched items even when offline or if the API is temporarily unavailable.
     *   Efficiently updates local cache with only new or changed items.
 
@@ -38,10 +38,8 @@ The application works by:
 
 1.  Allowing users to configure one or more search profiles, specifying keywords and filter options (description content, price range).
 2.  Periodically querying the Wallapop API for items matching these profiles.
-3.  Comparing fetched results against a local history of items already seen.
-4.  Storing new items and their images locally.
-5.  Alerting the user to new items via desktop notifications.
-6.  Displaying all monitored items in a tabbed interface, allowing users to click through to the Wallapop website.
+3.  Alerting the user to new items via desktop notifications.
+4.  Displaying all monitored items in a tabbed interface, allowing users to click through to the Wallapop website.
 
 ## Key Technologies
 
