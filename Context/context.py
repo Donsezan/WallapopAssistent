@@ -47,14 +47,15 @@ class Context():
         parameter_dict_serialized = {}
         for key, value in cls.MainParameters.get_dict().items():
             parameter_dict_serialized[key] = {
-            "search_type": Helper.remove_newline_symbol(value._search_type),            
-            "search_text": Helper.remove_newline_symbol(value._search_text),
+            SearchContentDetails.Fields.Search_type: Helper.remove_newline_symbol(value._search_type),            
+            SearchContentDetails.Fields.Search_text: Helper.remove_newline_symbol(value._search_text),
             # Using SearchContentDetails.Fields for consistency
             SearchContentDetails.Fields.Content_filter_checkBox: value._content_filter_checkBox,
-            "content_filter_text": Helper.remove_newline_symbol(value._content_filter_text),
-            "price_filter_checkbox": value._price_filter_checkbox,
-            "price_limit_from": Helper.remove_newline_symbol(str(value._price_limit_from)), # ensure string
-            "price_limit_to": Helper.remove_newline_symbol(str(value._price_limit_to)), # ensure string
+           SearchContentDetails.Fields.Content_filter_text: Helper.remove_newline_symbol(value._content_filter_text),
+            SearchContentDetails.Fields.Price_filter_checkbox: value._price_filter_checkbox,
+            SearchContentDetails.Fields.Price_limit_from: Helper.remove_newline_symbol(str(value._price_limit_from)), # ensure string
+            SearchContentDetails.Fields.Price_limit_to: Helper.remove_newline_symbol(str(value._price_limit_to)), # ensure string
+            SearchContentDetails.Fields.SearchGuid: Helper.remove_newline_symbol(str(value._searchGuid)), # ensure string
             SearchContentDetails.Fields.Dip_limit: value._dip_limit
             }        
         json_data = {
@@ -62,7 +63,7 @@ class Context():
             "notification_toastup_checkbox": cls.MainParameters.get_notification_toastup_checkbox(),
             "notification_soundnote_checkbox": cls.MainParameters.get_notification_soundnote_checkbox(),
             "refresh_result": cls.MainParameters.get_refresh_time(),
-            "auto_refresh_checkbox": cls.MainParameters.get_auto_refresh_checkbox(),           
+            "auto_refresh_checkbox": cls.MainParameters.get_auto_refresh_checkbox(),   
             "parameter_dict": parameter_dict_serialized
         }        
         return json_data
@@ -86,7 +87,7 @@ class Context():
                 cls.MainParameters.set_price_filter_checkbox(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_filter_checkbox, Constants.Buttons.Button_disable_status))
                 cls.MainParameters.set_price_limit_from(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_from, 0))
                 cls.MainParameters.set_price_limit_to(key, cls._get_parameter(value, SearchContentDetails.Fields.Price_limit_to, 99999))
-                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.SearchGuid, str(uuid.uuid4()))) # Corrected SearchGuid_
+                cls.MainParameters.set_SearchGuid(key, cls._get_parameter(value, SearchContentDetails.Fields.SearchGuid, str(uuid.uuid4()))) 
                 cls.MainParameters.set_dip_limit(key, cls._get_parameter(value, SearchContentDetails.Fields.Dip_limit, 0))
         cls.set_context_rehydrate_state(True)
     

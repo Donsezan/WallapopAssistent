@@ -38,7 +38,7 @@ class FiltersServices:
     #     return filtered_contents
     
     def _filter_content_by_price(self, contents, prices):       
-        filtered_data = [obj for obj in contents if float(prices[0]) <= float(obj.get('price', '0')) <= float(prices[1])]
+        filtered_data = [obj for obj in contents if float(prices[0]) <= float(obj.get('price', {}).get('amount', '0')) <= float(prices[1])]
         return filtered_data
 
     

@@ -3,7 +3,7 @@ import requests
 import uuid
 
 class ImageService:
-    def SavePhotofromWeb(url, file_name, temp_folder="temp"):
+    def SavePhotofromWeb(self, url, file_name, temp_folder="temp"):
          # Ensure the temp folder exists
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder, exist_ok=True) # <--- MODIFIED HERE

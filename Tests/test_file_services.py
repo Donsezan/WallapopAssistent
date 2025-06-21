@@ -159,7 +159,7 @@ class TestFileServices(unittest.TestCase):
         self.assertEqual(self.file_services.imageService.SavePhotofromWeb.call_count, len(content_with_missing_photos))
         calls = []
         for item in content_with_missing_photos:
-            expected_url = item['images'][0]['xsmall'].split('?', 1)[0]
+            expected_url = item['images'][0]['urls']['small'].split('?', 1)[0]
             expected_filename = item['web_slug']
             # Check if any call matches the expected arguments
             self.assertTrue(

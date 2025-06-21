@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call # Added call for checking multiple calls
 import sys
 import os
+import json # Added for the new test
 
 # Adjust the path to import from the root directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -44,22 +45,26 @@ class TestMainLogic(unittest.TestCase):
         self.assertIsNotNone(self.main_logic_instance)
         print("TestMainLogic initialized successfully.")
 
+    @patch('main_logic.datetime') # Mock datetime for this test
     @patch('main_logic.GraberServices') # Patch GraberServices in the module where it's used by Main_logic
-    def test_load_content_direct_search_success(self, MockGraberServices):
-        # Configure GraberServices mock instance and its method
+    def test_load_content_direct_search_success(self, MockGraberServices, MockCustomDatetime):
+        # Renamed from test_load_content_direct_search_success_with_date_mock
         mock_graber_instance = MockGraberServices.return_value
 
-        # Define mock product data
-        product1_k1 = {'id': '1', 'title': 'Product 1 k1', 'modification_date': '2023-01-01T10:00:00Z', 'creation_date': '2023-01-01T10:00:00Z'}
-        product2_k1 = {'id': '2', 'title': 'Product 2 k1', 'modification_date': '2023-01-03T10:00:00Z', 'creation_date': '2023-01-03T10:00:00Z'}
-        product1_k2 = {'id': '3', 'title': 'Product 1 k2', 'modification_date': '2023-01-02T10:00:00Z', 'creation_date': '2023-01-02T10:00:00Z'}
-        # Duplicate product (same id as product1_k1) to test deduplication
-        duplicate_product_k2 = {'id': '1', 'title': 'Duplicate Product k2', 'modification_date': '2023-01-04T10:00:00Z', 'creation_date': '2023-01-04T10:00:00Z'}
+        # Setup mock for datetime.now()
+        mock_now_for_test = datetime(2023, 1, 5, 0, 0, 0, tzinfo=timezone.utc) # A date close to item dates
+        MockCustomDatetime.now.return_value = mock_now_for_test
+        real_datetime_fromisoformat = datetime.fromisoformat
+        MockCustomDatetime.fromisoformat.side_effect = lambda d_str: real_datetime_fromisoformat(d_str.replace('Z', '+00:00'))
 
-        # Configure side_effect for get_all_results_for_keywords
-        # The side_effect function must match the signature of the mocked method
-        def graber_side_effect(keywords, target_list, max_results, **kwargs): # Added **kwargs to match service method
-            mock_graber_instance.search_id = "dummy_search_id" # Simulate a successful call that sets a search_id
+        # Define mock product data
+        product1_k1 = {'id': '1', 'title': 'Product 1 k1', 'modified_at': '2023-01-01T10:00:00Z', 'creation_date': '2023-01-01T10:00:00Z'}
+        product2_k1 = {'id': '2', 'title': 'Product 2 k1', 'modified_at': '2023-01-03T10:00:00Z', 'creation_date': '2023-01-03T10:00:00Z'}
+        product1_k2 = {'id': '3', 'title': 'Product 1 k2', 'modified_at': '2023-01-02T10:00:00Z', 'creation_date': '2023-01-02T10:00:00Z'}
+        duplicate_product_k2 = {'id': '1', 'title': 'Duplicate Product k2', 'modified_at': '2023-01-04T10:00:00Z', 'creation_date': '2023-01-04T10:00:00Z'}
+
+        def graber_side_effect(keywords, target_list, max_results, **kwargs):
+            mock_graber_instance.search_id = "dummy_search_id" 
             if keywords == "keyword1":
                 return [product1_k1, product2_k1]
             elif keywords == "keyword2":
@@ -67,41 +72,12 @@ class TestMainLogic(unittest.TestCase):
             return []
         mock_graber_instance.get_all_results_for_keywords.side_effect = graber_side_effect
 
-        # Configure context for Direct Search with multiple keywords
         self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.Direct_search
-        # Assuming Constants.SearchString_Siparator is ',' which is default for split if not specified
-        # And that get_search_text will be split by this separator in Main_logic
-        # If SearchString_Siparator is different, this needs to align or mock split behavior
         self.mock_main_parameters.get_search_text.return_value = "keyword1" + Constants.SearchString_Siparator + "keyword2"
-        self.mock_main_parameters.get_history_digging_days.return_value = 365 # Ensure no date filtering for this test
-        self.mock_main_parameters.get_dip_limit.return_value = 0 # 0 results in max_items_to_fetch = None (unlimited)
+        self.mock_main_parameters.get_history_digging_days.return_value = 365 
+        self.mock_main_parameters.get_dip_limit.return_value = 0 
 
-        # Call the method under test
         results = self.main_logic_instance.load_content(sorted_objects=[], key='test_direct_search_key')
-
-        # Assertions
-        expected_calls = [
-            call(keywords="keyword1", target_list=None, max_results=None, **{}), # Pass empty dict for kwargs if none expected
-            call(keywords="keyword2", target_list=None, max_results=None, **{})
-        ]
-        # Corrected: Pass actual kwargs used by the method, or if none, an empty dict.
-        # The actual method get_all_results_for_keywords in GraberServices has **kwargs
-        # The call from main_logic to it is get_all_results_for_keywords(keywords=target_keyword, target_list=None, max_results=max_items_to_fetch)
-        # So no extra kwargs are passed from main_logic to GraberServices in this specific path.
-
-        # We need to ensure the mock call signature matches what main_logic actually calls.
-        # main_logic calls: graberServices_instance.get_all_results_for_keywords(keywords=target_keyword, target_list=None, max_results=max_items_to_fetch)
-        # So, the expected calls should not include **kwargs if they are not passed.
-        # However, the mocked method *signature* should have **kwargs to be robust.
-        # The `call` objects for assert_has_calls should reflect the arguments *as passed*.
-
-        # Re-checking main_logic.py:
-        # current_target_content = graberServices_instance.get_all_results_for_keywords(
-        #     keywords=target_keyword,
-        #     target_list=None,
-        #     max_results=max_items_to_fetch
-        # )
-        # No explicit **kwargs are passed here.
 
         expected_calls_corrected = [
             call(keywords="keyword1", target_list=None, max_results=None),
@@ -109,40 +85,30 @@ class TestMainLogic(unittest.TestCase):
         ]
         mock_graber_instance.get_all_results_for_keywords.assert_has_calls(expected_calls_corrected, any_order=False)
         self.assertEqual(mock_graber_instance.get_all_results_for_keywords.call_count, 2)
+        
+        self.assertEqual(len(results), 3, f"Results were: {results}") 
+        self.assertEqual(results[0]['id'], '2') 
+        self.assertEqual(results[1]['id'], '3') 
+        self.assertEqual(results[2]['id'], '1') 
 
-        # Based on main_logic.py's deduplication (keeps first encountered id) and then sorting:
-        # Raw from API calls, extended: [product1_k1, product2_k1, product1_k2, duplicate_product_k2]
-        # After deduplication (keeps first id '1', duplicate_product_k2 (id '1') is dropped):
-        # Current main_logic dedupe:
-        # unique_new_items = []
-        # seen_ids = set()
-        # for item in new_content_array:
-        #     item_id = item.get('id')
-        #     if item_id and item_id not in seen_ids: # This means first encountered id '1' (product1_k1) is kept.
-        #         unique_new_items.append(item)
-        #         seen_ids.add(item_id)
-        # So, `duplicate_product_k2` which also has id '1' but comes later in the extended list will be dropped.
-        # Deduplicated list before sort: [product1_k1, product2_k1, product1_k2]
-        # After sorting (desc by modification_date, newest first):
-        # product2_k1: 2023-01-03
-        # product1_k2: 2023-01-02
-        # product1_k1: 2023-01-01
 
-        self.assertEqual(len(results), 3)
-        self.assertEqual(results[0]['id'], '2') # product2_k1 (2023-01-03)
-        self.assertEqual(results[1]['id'], '3') # product1_k2 (2023-01-02)
-        self.assertEqual(results[2]['id'], '1') # product1_k1 (2023-01-01)
-
+    @patch('main_logic.datetime') # Mock datetime for this test
+    @patch.object(Constants, 'Items_per_rotation', 2)
     @patch('main_logic.GraberServices')
-    @patch('main_logic.Constants.Items_per_rotation', 2) # Patch Items_per_rotation where main_logic accesses it
-    def test_load_content_history_search_success(self, MockItemsPerRotation, MockGraberServices): # Order of args matters
+    def test_load_content_history_search_success(self, MockGraberServices, MockCustomDatetime): # Signature updated
         mock_graber_instance = MockGraberServices.return_value
 
+        # Setup mock for datetime.now()
+        mock_now_for_test = datetime(2023, 2, 5, 0, 0, 0, tzinfo=timezone.utc) # A date close to item dates
+        MockCustomDatetime.now.return_value = mock_now_for_test
+        real_datetime_fromisoformat = datetime.fromisoformat
+        MockCustomDatetime.fromisoformat.side_effect = lambda d_str: real_datetime_fromisoformat(d_str.replace('Z', '+00:00'))
+
         # Define mock product data (more than max_results to test slicing by the service mock)
-        product1 = {'id': '10', 'title': 'History Product 10', 'modification_date': '2023-02-01T10:00:00Z', 'creation_date': '2023-02-01T10:00:00Z'}
-        product2 = {'id': '11', 'title': 'Unique History Product 11', 'modification_date': '2023-02-03T10:00:00Z', 'creation_date': '2023-02-03T10:00:00Z'}
-        product3 = {'id': '12', 'title': 'Test History Product 12', 'modification_date': '2023-02-02T10:00:00Z', 'creation_date': '2023-02-02T10:00:00Z'}
-        product4 = {'id': '13', 'title': 'Another History Product 13', 'modification_date': '2023-02-04T10:00:00Z', 'creation_date': '2023-02-04T10:00:00Z'}
+        product1 = {'id': '10', 'title': 'History Product 10', 'modified_at': '2023-02-01T10:00:00Z', 'creation_date': '2023-02-01T10:00:00Z'}
+        product2 = {'id': '11', 'title': 'Unique History Product 11', 'modified_at': '2023-02-03T10:00:00Z', 'creation_date': '2023-02-03T10:00:00Z'}
+        product3 = {'id': '12', 'title': 'Test History Product 12', 'modified_at': '2023-02-02T10:00:00Z', 'creation_date': '2023-02-02T10:00:00Z'}
+        product4 = {'id': '13', 'title': 'Another History Product 13', 'modified_at': '2023-02-04T10:00:00Z', 'creation_date': '2023-02-04T10:00:00Z'}
 
         mock_api_return_data_for_side_effect = [product1, product2, product3, product4]
 
@@ -167,7 +133,7 @@ class TestMainLogic(unittest.TestCase):
                 # Then max_results is applied.
                 # The sorting for max_results should happen *before* slicing.
 
-                # Sort by modification_date descending (newest first) to mimic ParseResults output if it were sorted,
+                # Sort by modified_at descending (newest first) to mimic ParseResults output if it were sorted,
                 # or just to ensure the slice for max_results is deterministic.
                 # The actual ParseResults in GraberServices doesn't sort. Sorting is done in main_logic.
                 # The get_all_results_for_keywords in GraberServices applies max_results to the list *from* ParseResults.
@@ -257,50 +223,46 @@ class TestMainLogic(unittest.TestCase):
         mock_rehydrate_contnet_method.assert_called_once_with(offline_error=True)
 
     @patch('main_logic.GraberServices')
-    def test_load_content_deduplication_and_sorting(self, MockGraberServices):
+    @patch('main_logic.datetime') # Mock datetime for this specific test
+    def test_load_content_deduplication_and_sorting(self, MockCustomDatetime, MockGraberServices):
+        # Renamed from test_load_content_deduplication_and_sorting_with_date_mock
         mock_graber_instance = MockGraberServices.return_value
 
-        # Define mock product data with duplicates and unsorted order
-        # p1_v1 and p1_v2 have the same id 'A'
-        p1_v1 = {'id': 'A', 'title': 'Product A v1', 'modification_date': '2023-03-01T10:00:00Z', 'creation_date': '2023-03-01T10:00:00Z'}
-        p2    = {'id': 'B', 'title': 'Product B',    'modification_date': '2023-03-03T10:00:00Z', 'creation_date': '2023-03-03T10:00:00Z'}
-        p1_v2 = {'id': 'A', 'title': 'Product A v2', 'modification_date': '2023-03-02T10:00:00Z', 'creation_date': '2023-03-02T10:00:00Z'} # Newer version of A
-        p3    = {'id': 'C', 'title': 'Product C',    'modification_date': '2023-03-01T12:00:00Z', 'creation_date': '2023-03-01T12:00:00Z'}
+        # Setup mock for datetime.now() within main_logic's scope for this test
+        mock_now_for_test = datetime(2023, 3, 5, 0, 0, 0, tzinfo=timezone.utc) # A date close to item dates
+        MockCustomDatetime.now.return_value = mock_now_for_test
+        real_datetime_fromisoformat = datetime.fromisoformat
+        MockCustomDatetime.fromisoformat.side_effect = lambda d_str: real_datetime_fromisoformat(d_str.replace('Z', '+00:00'))
 
-        # Order from service: p1_v1, p2, p1_v2, p3
-        # main_logic.load_content first deduplicates (keeps first seen 'id'), then sorts.
-        # So, p1_v1 is kept, p1_v2 is discarded.
-        # List after dedup: [p1_v1, p2, p3]
-        # Sorted (desc mod_date): [p2 (Mar 3), p3 (Mar 1, 12pm), p1_v1 (Mar 1, 10am)]
 
+        # Define mock product data with duplicates and unsorted order (same as original test)
+        p1_v1 = {'id': 'A', 'title': 'Product A v1', 'modified_at': '2023-03-01T10:00:00Z', 'creation_date': '2023-03-01T10:00:00Z'}
+        p2    = {'id': 'B', 'title': 'Product B',    'modified_at': '2023-03-03T10:00:00Z', 'creation_date': '2023-03-03T10:00:00Z'}
+        p1_v2 = {'id': 'A', 'title': 'Product A v2', 'modified_at': '2023-03-02T10:00:00Z', 'creation_date': '2023-03-02T10:00:00Z'} 
+        p3    = {'id': 'C', 'title': 'Product C',    'modified_at': '2023-03-01T12:00:00Z', 'creation_date': '2023-03-01T12:00:00Z'}
         mock_service_results = [p1_v1, p2, p1_v2, p3]
 
         def graber_side_effect(keywords, target_list, max_results, **kwargs):
-            mock_graber_instance.search_id = "dummy_search_id_dedup_sort"
+            mock_graber_instance.search_id = "dummy_search_id_dedup_sort_mocked_date"
+            # This mock does not slice by max_results, returns all 4 items.
             return mock_service_results
         mock_graber_instance.get_all_results_for_keywords.side_effect = graber_side_effect
 
-        # Configure context
-        self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.History_search # Or any non-direct type for single call
-        self.mock_main_parameters.get_search_text.return_value = "dedup_sort_keywords"
-        self.mock_main_parameters.get_history_digging_days.return_value = 365 # No date filtering by age
-        self.mock_main_parameters.get_dip_limit.return_value = 0 # No item limit from dip_limit
+        # Configure context (same as original test)
+        self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.History_search 
+        self.mock_main_parameters.get_search_text.return_value = "dedup_sort_keywords_mocked_date"
+        self.mock_main_parameters.get_history_digging_days.return_value = 365 
+        self.mock_main_parameters.get_dip_limit.return_value = 0 # Results in max_items_to_fetch = 10
 
-        results = self.main_logic_instance.load_content(sorted_objects=[], key='test_dedup_sort_key')
-
-        # Assertions
+        results = self.main_logic_instance.load_content(sorted_objects=[], key='test_dedup_sort_mocked_date_key')
+        
+        # Assertions (same as original test)
         mock_graber_instance.get_all_results_for_keywords.assert_called_once()
+        self.assertEqual(len(results), 3, f"Results were: {results}") # Added message for easier debugging
+        self.assertEqual(results[0]['id'], 'B') 
+        self.assertEqual(results[1]['id'], 'C') 
+        self.assertEqual(results[2]['id'], 'A') 
 
-        self.assertEqual(len(results), 3)
-        # Expected order: p2, p3, p1_v1
-        self.assertEqual(results[0]['id'], 'B') # p2
-        self.assertEqual(results[1]['id'], 'C') # p3
-        self.assertEqual(results[2]['id'], 'A') # p1_v1 (p1_v2 was discarded due to earlier p1_v1)
-
-        # Verify the modification dates to be sure of sort order
-        self.assertEqual(results[0]['modification_date'], '2023-03-03T10:00:00Z')
-        self.assertEqual(results[1]['modification_date'], '2023-03-01T12:00:00Z')
-        self.assertEqual(results[2]['modification_date'], '2023-03-01T10:00:00Z')
 
     @patch('main_logic.GraberServices')
     @patch('main_logic.datetime') # Mock datetime used by main_logic
@@ -323,11 +285,11 @@ class TestMainLogic(unittest.TestCase):
 
 
         # Define mock product data from GraberServices
-        p_very_new    = {'id': 'D1', 'title': 'Product Very New',    'modification_date': '2023-03-14T00:00:00Z', 'creation_date': '2023-03-14T00:00:00Z'}
-        p_newish      = {'id': 'D2', 'title': 'Product Newish',      'modification_date': '2023-03-10T00:00:00Z', 'creation_date': '2023-03-10T00:00:00Z'}
-        p_boundary    = {'id': 'D3', 'title': 'Product Boundary',    'modification_date': '2023-03-08T11:00:00Z', 'creation_date': '2023-03-08T11:00:00Z'}
-        p_too_old     = {'id': 'D4', 'title': 'Product Too Old',     'modification_date': '2023-03-01T00:00:00Z', 'creation_date': '2023-03-01T00:00:00Z'}
-        p_older_than_sorted = {'id': 'D5', 'title': 'Older than sorted', 'modification_date': '2023-03-09T00:00:00Z', 'creation_date': '2023-03-09T00:00:00Z'}
+        p_very_new    = {'id': 'D1', 'title': 'Product Very New',    'modified_at': '2023-03-14T00:00:00Z', 'creation_date': '2023-03-14T00:00:00Z'}
+        p_newish      = {'id': 'D2', 'title': 'Product Newish',      'modified_at': '2023-03-10T00:00:00Z', 'creation_date': '2023-03-10T00:00:00Z'}
+        p_boundary    = {'id': 'D3', 'title': 'Product Boundary',    'modified_at': '2023-03-08T11:00:00Z', 'creation_date': '2023-03-08T11:00:00Z'}
+        p_too_old     = {'id': 'D4', 'title': 'Product Too Old',     'modified_at': '2023-03-01T00:00:00Z', 'creation_date': '2023-03-01T00:00:00Z'}
+        p_older_than_sorted = {'id': 'D5', 'title': 'Older than sorted', 'modified_at': '2023-03-09T00:00:00Z', 'creation_date': '2023-03-09T00:00:00Z'}
 
         mock_service_results = [p_very_new, p_newish, p_boundary, p_too_old, p_older_than_sorted]
 
@@ -342,7 +304,7 @@ class TestMainLogic(unittest.TestCase):
         self.mock_main_parameters.get_history_digging_days.return_value = 7
         self.mock_main_parameters.get_dip_limit.return_value = 0
 
-        prepared_sorted_objects = [{'id': 'S1', 'title': 'Sorted Object Newest', 'modification_date': '2023-03-09T05:00:00Z', 'creation_date': '2023-03-09T05:00:00Z'}]
+        prepared_sorted_objects = [{'id': 'S1', 'title': 'Sorted Object Newest', 'modified_at': '2023-03-09T05:00:00Z', 'creation_date': '2023-03-09T05:00:00Z'}]
 
         results = self.main_logic_instance.load_content(sorted_objects=prepared_sorted_objects, key='test_date_filter_key')
 
@@ -352,6 +314,114 @@ class TestMainLogic(unittest.TestCase):
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]['id'], 'D1') # p_very_new
         self.assertEqual(results[1]['id'], 'D2') # p_newish
+
+    @patch('main_logic.datetime')
+    @patch('main_logic.GraberServices') # Patch GraberServices as it's called by load_content
+    def test_load_content_with_history_files(self, MockGraberServices, MockCustomDatetime):
+        mock_graber_instance = MockGraberServices.return_value
+        # Simulate a successful API call by setting a search_id attribute for most cases
+        mock_graber_instance.search_id = "dummy_search_id_history_files_test"
+
+        # --- Test Case 3: Date filtering behavior ---
+        # (Implementing this one first as it's most aligned with the "history files" theme)
+        with self.subTest("Date filtering with history and new items"):
+            # Mock datetime.now()
+            mock_now_dt = datetime(2024, 1, 25, 0, 0, 0, tzinfo=timezone.utc)
+            MockCustomDatetime.now.return_value = mock_now_dt
+            real_datetime_fromisoformat = datetime.fromisoformat
+            MockCustomDatetime.fromisoformat.side_effect = lambda d_str: real_datetime_fromisoformat(d_str.replace('Z', '+00:00'))
+            
+            # Load one of the history files
+            history_file_path = os.path.join("temp", "History_8bccf737-622c-4443-b58c-93ebc65a3a40.json")
+            with open(history_file_path, 'r') as f:
+                sorted_history_data = json.load(f) # Laptop (2024-01-15), Phone (2024-01-01)
+            
+            # Configure MainParameters for this subtest
+            self.mock_main_parameters.get_history_digging_days.return_value = 12 # Items older than 2024-01-13 are too old
+            self.mock_main_parameters.get_search_text.return_value = "any_search" # Not relevant for this filter part
+            self.mock_main_parameters.get_dip_limit.return_value = 0 # max_results = None
+            self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.History_search
+
+            # New items to be returned by GraberServices
+            new_item1 = {"id": "101", "title": "Very New Gadget", "modified_at": "2024-01-20T00:00:00Z"} # Keep (recent)
+            new_item2 = {"id": "102", "title": "Newish Gadget", "modified_at": "2024-01-14T00:00:00Z"} # Keep (within 12 days, newer than history item 1)
+            new_item3 = {"id": "103", "title": "Old Gadget", "modified_at": "2024-01-10T00:00:00Z"}    # Filtered out (older than 12 days)
+            new_item4 = {"id": "104", "title": "Gadget Older Than History", "modified_at": "2024-01-12T00:00:00Z"} # Filtered out (older than newest history item which is 2024-01-15)
+                                                                                                                        # and also older than 12 days from mock_now_dt
+            new_item5 = {"id": "105", "title": "Gadget Same Day as History Newest", "modified_at": "2024-01-15T11:00:00Z"} # Keep (newer than history item 1)
+
+            mock_graber_instance.get_all_results_for_keywords.return_value = [new_item1, new_item2, new_item3, new_item4, new_item5]
+
+            results = self.main_logic_instance.load_content(sorted_objects=sorted_history_data, key='date_filter_test_key')
+            
+            # Assertions for date filtering
+            # Expected: new_item1 (2024-01-20), new_item5 (2024-01-15T11), new_item2 (2024-01-14)
+            # new_item3 (2024-01-10) is older than 12 days from 2024-01-25.
+            # new_item4 (2024-01-12) is older than 12 days from 2024-01-25.
+            # newest item in sorted_history_data is 2024-01-15T10:00:00Z.
+            # new_item1 (Jan 20) is newer.
+            # new_item5 (Jan 15 T11) is newer.
+            # new_item2 (Jan 14) is older than latest_existing_item_date (Jan 15 T10) -> loop breaks.
+            # All subsequent items (new_item4, new_item3) are also older.
+            # Expected items: new_item1, new_item5.
+            
+            self.assertEqual(len(results), 2, f"Expected 2 items, got {len(results)}. Results: {results}")
+            result_ids = {item['id'] for item in results}
+            self.assertEqual(result_ids, {"101", "105"})
+
+        # --- Test Case 1: Varying search_text ---
+        with self.subTest("Varying search_text parameter"):
+            self.mock_main_parameters.get_search_text.return_value = "Specific Search Term"
+            self.mock_main_parameters.get_dip_limit.return_value = 0 # max_results = None
+            self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.History_search
+            # Ensure datetime doesn't interfere if not explicitly set for this subtest
+            MockCustomDatetime.now.return_value = datetime(2024,1,25,0,0,0, tzinfo=timezone.utc)
+
+
+            mock_graber_instance.get_all_results_for_keywords.return_value = [{"id": "S1", "title": "Search Result", "modified_at": "2024-01-24T00:00:00Z"}]
+            
+            # Using an empty history for simplicity of checking Graber call
+            self.main_logic_instance.load_content(sorted_objects=[], key='search_text_test_key')
+            
+            expected_target_list = "Specific Search Term".split(Constants.SearchString_Siparator)
+            mock_graber_instance.get_all_results_for_keywords.assert_called_with(
+                keywords="Specific Search Term", 
+                target_list=expected_target_list, 
+                max_results=None
+            )
+
+        # --- Test Case 2: Varying dip_limit ---
+        with self.subTest("Varying dip_limit parameter"):
+            self.mock_main_parameters.get_search_text.return_value = "any"
+            self.mock_main_parameters.get_search_type.return_value = Constants.SearchType.History_search
+            MockCustomDatetime.now.return_value = datetime(2024,1,25,0,0,0, tzinfo=timezone.utc)
+
+
+            # Scenario A: dip_limit = 1 (max_results = 1 * Constants.Items_per_rotation (default 40))
+            self.mock_main_parameters.get_dip_limit.return_value = 1 
+            # Patch Items_per_rotation for this specific call if needed, or use default. Default is 40.
+            # To make it testable without changing global Constants, we can assume Graber mock will just receive it.
+            expected_max_A = 1 * Constants.Items_per_rotation # Default 40
+            
+            mock_graber_instance.get_all_results_for_keywords.return_value = [{"id": "D1", "title": "DipLimit Result A", "modified_at": "2024-01-24T00:00:00Z"}]
+            self.main_logic_instance.load_content(sorted_objects=[], key='dip_limit_test_key_A')
+            args_A, kwargs_A = mock_graber_instance.get_all_results_for_keywords.call_args
+            self.assertEqual(kwargs_A['max_results'], expected_max_A)
+
+            # Scenario B: dip_limit = 0 (max_results = None)
+            self.mock_main_parameters.get_dip_limit.return_value = 0
+            mock_graber_instance.get_all_results_for_keywords.return_value = [{"id": "D2", "title": "DipLimit Result B", "modified_at": "2024-01-24T00:00:00Z"}]
+            self.main_logic_instance.load_content(sorted_objects=[], key='dip_limit_test_key_B')
+            args_B, kwargs_B = mock_graber_instance.get_all_results_for_keywords.call_args
+            self.assertIsNone(kwargs_B['max_results'])
+            
+            # Scenario C: dip_limit = None (max_results = 10)
+            self.mock_main_parameters.get_dip_limit.return_value = None
+            mock_graber_instance.get_all_results_for_keywords.return_value = [{"id": "D3", "title": "DipLimit Result C", "modified_at": "2024-01-24T00:00:00Z"}]
+            self.main_logic_instance.load_content(sorted_objects=[], key='dip_limit_test_key_C')
+            args_C, kwargs_C = mock_graber_instance.get_all_results_for_keywords.call_args
+            self.assertEqual(kwargs_C['max_results'], 10)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,7 @@ class Constants:
     Parameters_file_name = "Parameters.json"
     SearchString_Siparator = ','
     CheackBox_enabled_status = "active"
-    Direct_search_path = "https://api.wallapop.com/api/v3/general/search"    
+    Direct_search_path = "https://api.wallapop.com/api/v3/search"    
     Items_per_rotation = 40
     Temp_folder = "temp"
 
