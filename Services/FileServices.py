@@ -85,7 +85,10 @@ class FileServices:
                             print(f"Error: Unable to delete file '{file_path}'.")
                             print(f"Error details: {e}")
 
-    def Delete_old_historys(self, keys):       
+    def Delete_old_historys(self, keys):   
+        if not os.path.exists(self.temp_folder):
+            os.makedirs(self.temp_folder)
+            return
         files = os.listdir(self.temp_folder)        
         for file in files:
             if file.startswith("History") and file.endswith(".json"):

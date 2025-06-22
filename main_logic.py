@@ -157,10 +157,9 @@ class Main_logic:
             # Helper.sort_content_by_date might need to handle items missing this key
             new_content_array = Helper.sort_content_by_date(new_content_array, reversed=True)
 
-        final_results_to_return = sorted_objects
-        if new_content_array:
-            history_digging_days = self.ctx.MainParameters.get_history_digging_days()
-            
+        # Make a shallow copy of sorted_objects to avoid modifying the original list
+        final_results_to_return = list(sorted_objects) if sorted_objects else []
+        if new_content_array:            
             # Assuming sorted_objects is already sorted newest first.
             latest_existing_item_date = None
             if sorted_objects and len(sorted_objects) > 0 and 'modified_at' in sorted_objects[0]:
@@ -173,12 +172,12 @@ class Main_logic:
             for item in new_content_array:
                 try:
                     item_modification_date_str = item['modified_at']
-                    if Helper.unix_data_is_older_than(item_modification_date_str, history_digging_days):
+                    if Helper.unix_data_is_older_than(item_modification_date_str, self.ctx.MainParameters.get_history_digging_days()):
                         # Item is older than history_digging_days, so we stop processing further (list is sorted)
                         break
 
-                    if latest_existing_item_date and item_modification_date_str < latest_existing_item_date:
-                        # If the item is older than the latest existing item, we can scip it
+                    if latest_existing_item_date is not None and item_modification_date_str < latest_existing_item_date:
+                        # If the item is older than the latest existing item, we can skip it
                         continue
 
                     final_results_to_return.append(item)

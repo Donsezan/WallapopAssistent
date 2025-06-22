@@ -188,7 +188,7 @@ class GraberServices:
 
             while next_page_token:
                 if max_results is not None and Helper.unix_data_is_older_than(min(obj["modified_at"] for obj in all_products),max_results):
-                    print(f"Reached max_results limit of {max_results}. Stopping pagination.")
+                    print(f"Reached max_results limit of {max_results} days. Stopping pagination.")
                     break
 
                 print(f"Fetching next page with token: {next_page_token}")
@@ -213,7 +213,4 @@ class GraberServices:
             print(f"An unexpected error occurred: {e}")
             # Handle other potential errors gracefully
             # For now, it will fall through
-
-        if max_results is not None:
-            return all_products[:max_results]
         return all_products
