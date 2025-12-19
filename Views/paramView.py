@@ -6,7 +6,6 @@ from helper import Helper
 from Views.paramTabView import ParamTabView
 from Services.FileServices import FileServices
 
-
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(parent_dir)
 from constants import Constants
@@ -41,51 +40,85 @@ class ParamView():
         self.notification_toastup_checkbox_var = customtkinter.StringVar(value=self.ctx.TempParameters.get_notification_toastup_checkbox())
         self.notification_soundnote_checkbox_var = customtkinter.StringVar(value=self.ctx.TempParameters.get_notification_soundnote_checkbox())
 
-        self.rootFrame.columnconfigure(1, weight=0)
-        self.rootFrame.columnconfigure(2, weight=1)
-        self.rootFrame.columnconfigure(3, weight=0)
-        self.rootFrame.columnconfigure(2, weight=1)
+        # Main Layout Configuration
+        self.rootFrame.grid_columnconfigure(0, weight=1)
+        self.rootFrame.grid_rowconfigure(0, weight=0) # Title / Header
+        self.rootFrame.grid_rowconfigure(1, weight=0) # General Settings
+        self.rootFrame.grid_rowconfigure(2, weight=1) # TabView (Search Settings)
+        self.rootFrame.grid_rowconfigure(3, weight=0) # Save Button
 
-        self.paramTabView.init(self.rootFrame)
-        self.update_values()
+        # --- Header ---
+        header_label = customtkinter.CTkLabel(self.rootFrame, text="Settings", font=customtkinter.CTkFont(size=24, weight="bold"), text_color=Constants.Colors.TextPrimary)
+        header_label.grid(row=0, column=0, padx=global_padx, pady=(20, 10), sticky="w")
 
-        #Auto refresh checkbox
-        auto_refresh_checkbox_row = 7
-        self.rootFrame.auto_refresh_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Auto refresh", command=self.auto_refresh_checkbox_event, variable=self.auto_refresh_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        self.rootFrame.auto_refresh_checkbox.grid(row=auto_refresh_checkbox_row, column=0, sticky="nsew", padx=global_padx, pady=5, columnspan=2)   
-       
-        #Refresh time row
-        refresh_time_row = auto_refresh_checkbox_row + 1
-        self.rootFrame.refresh_time_label = customtkinter.CTkLabel(self.rootFrame, text="Refresh time (sec)", compound="left", height=20, font=customtkinter.CTkFont(size=14))    
-        self.rootFrame.refresh_time_label.grid(row=refresh_time_row, column=0, sticky="w", padx=global_padx, pady=10, columnspan=1)            
+        # --- General Settings Frame ---
+        general_settings_frame = customtkinter.CTkFrame(self.rootFrame, fg_color=Constants.Colors.CardBackground, corner_radius=10)
+        general_settings_frame.grid(row=1, column=0, padx=global_padx, pady=10, sticky="ew")
         
-        self.rootFrame.refresh_time_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=5, height=28, activate_scrollbars= False )
-        self.rootFrame.refresh_time_textbox.grid(row=refresh_time_row, column=1, sticky="ew",padx=global_padx, pady=10, columnspan=3) 
+        general_settings_frame.grid_columnconfigure(0, weight=1)
+        general_settings_frame.grid_columnconfigure(1, weight=1)
+
+        # Left Column: Checkboxes
+        left_col_frame = customtkinter.CTkFrame(general_settings_frame, fg_color="transparent")
+        left_col_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        
+        self.rootFrame.auto_refresh_checkbox = customtkinter.CTkCheckBox(left_col_frame, text="Auto Refresh", 
+                                                                         command=self.auto_refresh_checkbox_event, 
+                                                                         variable=self.auto_refresh_checkbox_var, 
+                                                                         onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL,
+                                                                         fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        self.rootFrame.auto_refresh_checkbox.pack(anchor="w", pady=5)
+
+        self.rootFrame.notification_toastup_checkbox = customtkinter.CTkCheckBox(left_col_frame, text="Show Toast Notifications", 
+                                                                                 variable=self.notification_toastup_checkbox_var, 
+                                                                                 onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL,
+                                                                                 fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        self.rootFrame.notification_toastup_checkbox.pack(anchor="w", pady=5)
+
+        self.rootFrame.notification_soundnote_checkbox = customtkinter.CTkCheckBox(left_col_frame, text="Play Notification Sound", 
+                                                                                   variable=self.notification_soundnote_checkbox_var, 
+                                                                                   onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL,
+                                                                                   fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        self.rootFrame.notification_soundnote_checkbox.pack(anchor="w", pady=5)
+
+        # Right Column: Numeric Inputs
+        right_col_frame = customtkinter.CTkFrame(general_settings_frame, fg_color="transparent")
+        right_col_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        
+        # Refresh Time
+        self.rootFrame.refresh_time_label = customtkinter.CTkLabel(right_col_frame, text="Refresh Interval (sec):", font=customtkinter.CTkFont(size=12), text_color=Constants.Colors.TextSecondary)    
+        self.rootFrame.refresh_time_label.pack(anchor="w")
+        self.rootFrame.refresh_time_textbox = customtkinter.CTkTextbox(right_col_frame, corner_radius=5, height=28, width=200, activate_scrollbars=False, border_width=1, border_color="gray80", fg_color="white", text_color="black")
+        self.rootFrame.refresh_time_textbox.pack(anchor="w", pady=(0, 10))
         self.rootFrame.refresh_time_textbox.insert("0.0", self.ctx.TempParameters.get_refresh_time() )   
-       
-        #History digging days row
-        history_diggind_days_row = refresh_time_row + 1
-        self.rootFrame.history_digging_days_label = customtkinter.CTkLabel(self.rootFrame, text="History retention (days)", compound="left", height=20, font=customtkinter.CTkFont(size=14))    
-        self.rootFrame.history_digging_days_label.grid(row=history_diggind_days_row, column=0, sticky="w", padx=global_padx, pady=10,columnspan=1)            
-        
-        self.rootFrame.history_digging_days_textbox = customtkinter.CTkTextbox(self.rootFrame, corner_radius=5, height=28, activate_scrollbars= False )
-        self.rootFrame.history_digging_days_textbox.grid(row=history_diggind_days_row, column=1, sticky="ew",padx=global_padx, pady=10, columnspan=3) 
+
+        # History Days
+        self.rootFrame.history_digging_days_label = customtkinter.CTkLabel(right_col_frame, text="History Retention (days):", font=customtkinter.CTkFont(size=12), text_color=Constants.Colors.TextSecondary)    
+        self.rootFrame.history_digging_days_label.pack(anchor="w")
+        self.rootFrame.history_digging_days_textbox = customtkinter.CTkTextbox(right_col_frame, corner_radius=5, height=28, width=200, activate_scrollbars=False, border_width=1, border_color="gray80", fg_color="white", text_color="black")
+        self.rootFrame.history_digging_days_textbox.pack(anchor="w")
         self.rootFrame.history_digging_days_textbox.insert("0.0", self.ctx.TempParameters.get_history_digging_days() )  
 
-        #Notification toast-up checkbox
-        notification_toastup_checkbox_row = history_diggind_days_row + 1
-        self.rootFrame.notification_toastup_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Show toast notifications", variable=self.notification_toastup_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        self.rootFrame.notification_toastup_checkbox.grid(row=notification_toastup_checkbox_row, column=0, sticky="nsew", padx=global_padx, pady=5, columnspan=2)   
+        # --- Tab View Wrapper ---
+        # ParamTabView will attach itself to a container so we can control grid placement better
+        tab_view_container = customtkinter.CTkFrame(self.rootFrame, fg_color="transparent")
+        tab_view_container.grid(row=2, column=0, sticky="nsew", padx=global_padx, pady=10)
+        
+        tab_view_container.grid_columnconfigure(0, weight=1)
+        tab_view_container.grid_rowconfigure(0, weight=1)
+        
+        # We need to hack ParamTabView slightly or just let it use the container as 'root' if it supports it.
+        # ParamTabView.init expects 'root' and tries to create 'root.tabview'.
+        # Let's pass 'tab_view_container' as root.
+        self.paramTabView.init(tab_view_container)
 
-        #Notification sound note checkbox
-        notification_soundnote_checkbox_row = notification_toastup_checkbox_row + 1
-        self.rootFrame.notification_soundnote_checkbox = customtkinter.CTkCheckBox(self.rootFrame, text="Play sound on notification", variable=self.notification_soundnote_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        self.rootFrame.notification_soundnote_checkbox.grid(row=notification_soundnote_checkbox_row, column=0, sticky="nsew", padx=global_padx, pady=5, columnspan=2)       
+        # --- Save Button ---
+        self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save Changes", width=200, height=45, 
+                                                             fg_color=Constants.Buttons.Button_enable_color, 
+                                                             font=customtkinter.CTkFont(size=15, weight="bold"),
+                                                             command=self.save_field_event)
+        self.rootFrame.save_button.grid(row=3, column=0, sticky="ew", padx=global_padx, pady=20)
 
-        #Save button
-        save_button_row = notification_soundnote_checkbox_row + 1
-        self.rootFrame.save_button = customtkinter.CTkButton(self.rootFrame, text="Save Changes", width=30, height=35, fg_color=Constants.Buttons.Button_enable_color, command=self.save_field_event)
-        self.rootFrame.save_button.grid(row=save_button_row, column=0, sticky="ew",padx=global_padx, pady=20, columnspan=4)
 
         #Call all events to set filds config
         self.auto_refresh_checkbox_event()
@@ -93,7 +126,14 @@ class ParamView():
         self.is_initialized = True
 
     def save_field_event(self):
-        tabs = self.rootFrame.tabview
+        # We passed 'tab_view_container' as root to paramTabView, so tabview is attached to that.
+        # But we need access to it. paramTabView attaches 'tabview' to the root we passed.
+        # However, self.paramTabView.rootFrame became the container.
+        
+        # Accessing tabview via the container we created:
+        # Since I didn't save the container to self, I should probably rely on self.paramTabView.rootFrame.
+        tabs = self.paramTabView.rootFrame.tabview 
+        
         price_fields_valid = []
         for name, data in tabs._tab_dict.items():            
             if name == '+':
@@ -136,10 +176,10 @@ class ParamView():
        
     def auto_refresh_checkbox_event(self):
         if self.auto_refresh_checkbox_var.get() == customtkinter.ACTIVE:
-            self.rootFrame.refresh_time_textbox.configure(state = customtkinter.NORMAL, text_color= "White")   
+            self.rootFrame.refresh_time_textbox.configure(state = customtkinter.NORMAL, fg_color="white", text_color="black")   
             print("auto_refresh_checkbox_event: ", customtkinter.ACTIVE)
         else:
-            self.rootFrame.refresh_time_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
+            self.rootFrame.refresh_time_textbox.configure(state = customtkinter.DISABLED, fg_color="gray90", text_color="gray60") 
             print("auto_refresh_checkbox_event: ", customtkinter.NORMAL)
     
     def is_valid_refreshTime_digintTime(self):
@@ -154,17 +194,14 @@ class ParamView():
             return
         if is_blocked:
             self.is_save_bloked = True    
-            self.rootFrame.save_button.configure(fg_color= Constants.Buttons.Button_restricted_color, text="Save is blocked: Invalid fields")  
+            self.rootFrame.save_button.configure(fg_color= Constants.Buttons.Button_restricted_color, text="Save is blocked: Invalid fields (Check red highlighted inputs)")  
         else:
             self.is_save_bloked = False    
             self.rootFrame.save_button.configure(fg_color= Constants.Buttons.Button_enable_color, text="Save Changes")  
 
     def update_values(self):
         # Update UI with current values from params
-        if hasattr(self, 'rootFrame') and hasattr(self.rootFrame, 'refresh_time_textbox'):
-             if self.ctx.TempParameters:
-                 # Checkbox needs to be updated too if the model changed externally or reloaded (not common here but safe)
-                 pass
+        pass
 
 
 

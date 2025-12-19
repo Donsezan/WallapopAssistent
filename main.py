@@ -17,6 +17,8 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__()
+        customtkinter.set_appearance_mode("Light")
+        customtkinter.set_default_color_theme("green") 
         self.ctx = Context()  
         self.main_logic = Main_logic(self.ctx)
         self.mainFrame = MainView(self.ctx)
@@ -31,7 +33,7 @@ class App(customtkinter.CTk):
         self.current_frame = None
 
         self.title("Wallapop assistent")
-        self.geometry("1600x800")
+        self.geometry("1350x800")
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -56,12 +58,12 @@ class App(customtkinter.CTk):
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
         self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Home,
-                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                   fg_color="transparent", text_color=Constants.Colors.TextPrimary, hover_color=Constants.Colors.GrayHover,
                                                    image=self.home_image, anchor="w", command=self.home_button_event)
         self.home_button.grid(row=1, column=0, sticky="ew")
 
         self.settings_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Settings,
-                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      fg_color="transparent", text_color=Constants.Colors.TextPrimary, hover_color=Constants.Colors.GrayHover,
                                                       image=self.chat_image, anchor="w", command=self.settings_button_event)
         self.settings_button.grid(row=2, column=0, sticky="ew")
 
@@ -84,8 +86,8 @@ class App(customtkinter.CTk):
 
     def select_frame_by_name(self, name):
 
-        self.home_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Home else "transparent")
-        self.settings_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Settings else "transparent")
+        self.home_button.configure(fg_color=Constants.Colors.GrayNormal if name == Constants.Frames.Home else "transparent")
+        self.settings_button.configure(fg_color=Constants.Colors.GrayNormal if name == Constants.Frames.Settings else "transparent")
 
         if self.current_frame == name:
             return

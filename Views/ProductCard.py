@@ -10,7 +10,8 @@ class ProductCard(customtkinter.CTkFrame):
         self.image_cache = image_cache
         
         # Style configuration
-        self.configure(fg_color=("white", "#2b2b2b"), corner_radius=10, border_width=1, border_color=("gray80", "gray40"))
+        from constants import Constants
+        self.configure(fg_color=Constants.Colors.CardBackground, corner_radius=10, border_width=1, border_color="gray90")
         
         # Layout
         self.grid_columnconfigure(1, weight=1) # Title column expands
@@ -24,27 +25,23 @@ class ProductCard(customtkinter.CTkFrame):
         # If price is a number, format it. If string, just use it.
         # Wallapop often sends price as number.
         if isinstance(price_val, (int, float)):
+             self.price_text = f"{price_val} {currency}"
+        elif isinstance(price_val, dict):
              self.price_text = f"{price_val['amount']} {currency}"
         else:
-             self.price_text = f"{price_val['amount']} {currency}"
+             self.price_text = f"{price_val} {currency}"
 
         self.web_slug = content.get('web_slug', '')
         
         # Reserved Status
         # Check various possible keys for reservation
-        self.is_reserved = content.get('reserved', False)["flag"] 
-        if self.is_reserved:         
-            self.is_reserved = True
-
-        # Ideally, we pass the full image path or handle the construction outside. 
-        # But for now, I'll stick to what was there or improve it. 
-        # The previous code used: os.path.join(Constants.Temp_folder, item_content['web_slug'] + ".jpg")
-        # I will let the caller handle the full path logic or pass it in 'content' if I modify the caller.
-        # Actually, let's keep it simple: caller passes the full image path in a new key or I calculate it if I have Constants.
+        self.is_reserved = False
+        reserved_data = content.get('reserved', False)
+        if isinstance(reserved_data, dict):
+             self.is_reserved = reserved_data.get("flag", False)
+        elif isinstance(reserved_data, bool):
+             self.is_reserved = reserved_data
         
-        # Let's assume the caller will pass the calculated image_path in 'content' or I import Constants.
-        # Importing Constants here is safer.
-        from constants import Constants
         self.full_image_path = os.path.join(Constants.Temp_folder, self.web_slug + ".jpg")
 
         # --- Image ---
@@ -58,8 +55,9 @@ class ProductCard(customtkinter.CTkFrame):
             self, 
             text=self.title_text, 
             font=customtkinter.CTkFont(size=14, weight="bold"),
+            text_color=Constants.Colors.TextPrimary,
             anchor="w",
-            wraplength=300 
+            wraplength=200 
         )
         self.title_label.grid(row=0, column=1, sticky="nw", padx=(0, 10), pady=(10, 0))
 
@@ -68,7 +66,7 @@ class ProductCard(customtkinter.CTkFrame):
             self, 
             text=self.price_text, 
             font=customtkinter.CTkFont(size=16, weight="bold"),
-            text_color=("green", "#2cc985"), 
+            text_color=Constants.Colors.Primary, # Wallapop Green
             anchor="w"
         )
         self.price_label.grid(row=1, column=1, sticky="w", padx=(0, 10), pady=(0, 0))
@@ -80,7 +78,7 @@ class ProductCard(customtkinter.CTkFrame):
                 text="RESERVED",
                 font=customtkinter.CTkFont(size=12, weight="bold"),
                 text_color="white",
-                fg_color="#e04f5f", # Reddish color
+                fg_color=Constants.Colors.TextError, # Reddish color
                 corner_radius=5,
                 width=80
             )
@@ -97,14 +95,13 @@ class ProductCard(customtkinter.CTkFrame):
             text="Open", 
             width=80, 
             height=30,
+            fg_color=Constants.Colors.Primary,
+            hover_color="#0e9c8b",
+            text_color="white",
             command=self._open_url
         )
         self.open_button.grid(row=button_row, column=1, sticky="se", padx=10, pady=10)
 
-        # Make the whole card clickable (optional)
-        # self.bind("<Button-1>", lambda e: self._open_url())
-        # self.title_label.bind("<Button-1>", lambda e: self._open_url())
-        
     def _load_image(self):
         if self.image_cache is not None and self.web_slug in self.image_cache:
             self.image_label.configure(image=self.image_cache[self.web_slug])
