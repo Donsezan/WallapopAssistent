@@ -41,27 +41,38 @@ class FileServices:
         elif new_object is None or len(new_object) == 0:
             return old_object
         
-        # merged_objects = []
-        # merged_objects.extend(old_object)
-        # for old_obj in old_object:  
-        #     for new_obj in new_object:  
-        #         if old_obj['id'] != new_obj['id']:
-        #             merged_objects.append(new_obj)
-
-        merged_objects = old_object.copy()
-
+        # Use a dictionary to map IDs to objects for easier access and updating
+        # Start with old objects
+        merged_dict = {obj['id']: obj for obj in old_object if 'id' in obj}
+        
+        # Add or update with new objects
         for new_obj in new_object:
-            # Check if there is an object with the same id in old_objects
-            existing_obj = next((obj for obj in merged_objects if obj.get("id") == new_obj.get("id")), None)
+            if 'id' in new_obj:
+                merged_dict[new_obj['id']] = new_obj
+            else:
+                # If no ID, we can't reliably merge/deduplicate, so we might append or handle differently.
+                # For now, assuming all valid content has an ID. 
+                # If needed, we could append to a separate list of non-id items.
+                pass 
 
-            if existing_obj is None:
-                # If no object with the same id exists, add the new object to the list
-                merged_objects.append(new_obj)
+        # Convert back to list
+        merged_objects = list(merged_dict.values())
 
-        # merged_objects = json.dumps(merged_objects, indent=2)         
+        # Restore any items from old_object that didn't have an ID (if any) and weren't in the dict
+        # This is a bit of a safety net if there are mixed items
+        for obj in old_object:
+            if 'id' not in obj:
+                merged_objects.append(obj)
+        
+        # Append new items that didn't have an ID (if any)
+        for obj in new_object:
+            if 'id' not in obj:
+                merged_objects.append(obj)
+       
         for m_obj in merged_objects:  
-            print(m_obj["id"])  
-        # print(merged_objects)  
+            if "id" in m_obj:
+                print(m_obj["id"])  
+        
         return merged_objects
     
     def Delete_old_images(self, content):
