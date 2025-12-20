@@ -15,17 +15,29 @@ class Constants:
         Direct_search = 0
         History_search = 1
     
+    class Colors:
+        Primary = "#13C1AC" # Wallapop Green
+        Background = "#F0F2F5" # Light Gray
+        CardBackground = "#FFFFFF" # White
+        TextPrimary = "#253238" # Dark Blue/Gray
+        TextSecondary = "#90A4AE"
+        TextError = "#e04f5f" # Red
+        GrayNormal = "gray75"
+        GrayHover = "gray85"
+        
     class Buttons:
         Refresh_button_working_text = "(working)"
         Refresh_button_normal_text = "Refresh"        
         Refresh_button_pause_text = "Pause"
-        Button_disable_color = "gray30"
-        Button_restricted_color = "Red"
-        Button_enable_color = ['#3B8ED0', '#1F6AA5']
+        
+        Button_disable_color = "gray80" # Lighter gray for disabled
+        Button_restricted_color = "#e04f5f" # Red
+        Button_enable_color = "#13C1AC" # Wallapop Green
+        
         Button_disable_status = "disabled"
 
     class Texts:
-        Text_disable_color = "Grey"
-        Text_enable_color = "White"
-        Text_restricted_color = "Red"
-        Text_normal_color = ['#F9F9FA', '#1D1E1E']
+        Text_disable_color = "gray60"
+        Text_enable_color = "#253238"
+        Text_restricted_color = "#e04f5f"
+        Text_normal_color = "#253238"

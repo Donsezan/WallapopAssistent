@@ -1,6 +1,7 @@
 import customtkinter
 from helper import Helper
 from constants import Constants
+from Views.confirmationDialog import ConfirmationDialog
 
 class ParamTabView:
     def __init__(self, ctx):
@@ -9,8 +10,8 @@ class ParamTabView:
     
     def init(self, root):  
         self.rootFrame = root                   
-        self.rootFrame.tabview = customtkinter.CTkTabview(self.rootFrame)
-        self.rootFrame.tabview.grid(row=0, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew", columnspan=4)       
+        self.rootFrame.tabview = customtkinter.CTkTabview(self.rootFrame, fg_color=Constants.Colors.CardBackground, segmented_button_fg_color=Constants.Colors.Background, segmented_button_selected_color=Constants.Colors.Primary, segmented_button_selected_hover_color="#0e9c8b")
+        self.rootFrame.tabview.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")       
              
         for param_key in self.ctx.TempParameters.get_dict():
             self.rootFrame.tabview.add(param_key)      
@@ -31,120 +32,108 @@ class ParamTabView:
         tabFrame._guid = paramters._searchGuid
 
         price_filter_checkbox_comand = object
+        # Clean Grid Layout
         tabFrame.grid_columnconfigure(0, weight=1)
-        tabFrame.columnconfigure(1, weight=0)
-        tabFrame.columnconfigure(2, weight=1)
-        tabFrame.columnconfigure(3, weight=0)
-        tabFrame.columnconfigure(2, weight=1)
+        tabFrame.grid_columnconfigure(1, weight=1)
         
-        #Search radio button group
-        search_radio_button_group_row = 0
-        tabFrame.radiobutton_frame = customtkinter.CTkFrame(tabFrame)
-        tabFrame.radiobutton_frame.grid(row=search_radio_button_group_row, column=0, padx=(20, 20), pady=(20, 0), sticky="nsew", columnspan=4)
-
-        tabFrame.search_radio_button_1 = customtkinter.CTkRadioButton(master=tabFrame.radiobutton_frame, text="Direct search", variable=tabFrame.search_radio_button_var, value=Constants.SearchType.Direct_search)
-        tabFrame.search_radio_button_1.grid(row=0, column=0, pady=10, padx=20, sticky="n")
-        search_radio_button_2 = customtkinter.CTkRadioButton(master=tabFrame.radiobutton_frame, text="History search", variable=tabFrame.search_radio_button_var, value=Constants.SearchType.History_search)
-        search_radio_button_2.grid(row=0, column=1, pady=10, padx=20, sticky="nsew")
-        tabFrame.radiobutton_frame.grid_columnconfigure(0, weight=1)
-        tabFrame.radiobutton_frame.grid_columnconfigure(1, weight=1)
-
-        # #Main filter row
-        main_filter_row = search_radio_button_group_row + 1
-        tabFrame.main_filter_label = customtkinter.CTkLabel(tabFrame, text="Filter", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
-        tabFrame.main_filter_label.grid(row=main_filter_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=1)            
+        # --- Search Type Selection ---
         
-        tabFrame.main_filter_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=0, height=20, activate_scrollbars= False)
-        tabFrame.main_filter_textbox.grid(row=main_filter_row, column=1, sticky="nsew",padx=5, pady=5, columnspan=3)              
+        type_frame = customtkinter.CTkFrame(tabFrame, fg_color="transparent")
+        type_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(20, 10))
+        
+        tabFrame.search_radio_button_1 = customtkinter.CTkRadioButton(master=type_frame, text="Direct Search", variable=tabFrame.search_radio_button_var, value=Constants.SearchType.Direct_search, fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        tabFrame.search_radio_button_1.pack(side="left", padx=(0, 20))
+        search_radio_button_2 = customtkinter.CTkRadioButton(master=type_frame, text="History Search", variable=tabFrame.search_radio_button_var, value=Constants.SearchType.History_search, fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        search_radio_button_2.pack(side="left")
+
+        # --- Keyword Search ---
+        keyword_label = customtkinter.CTkLabel(tabFrame, text="Search Keywords", font=customtkinter.CTkFont(size=12, weight="bold"), text_color=Constants.Colors.TextPrimary)
+        keyword_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 5))
+        
+        tabFrame.main_filter_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=5, height=80, border_width=1, border_color="gray80", fg_color="white", text_color="black")
+        tabFrame.main_filter_textbox.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 10))
         tabFrame.main_filter_textbox.insert("0.0", tabFrame._search_text)
-    
-        #Content filters checkbox
-        content_checkBox_row = main_filter_row + 1
-        content_fileter_checkbox_clomand = lambda: self.content_fileter_checkbox_event(tabFrame)       
-        tabFrame.content_checkBox = customtkinter.CTkCheckBox(tabFrame, text="Content filter", command=content_fileter_checkbox_clomand, variable=tabFrame.content_fileter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        tabFrame.content_checkBox.grid(row=content_checkBox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)        
-        
-        #Content filters row
-        content_fileter_row = content_checkBox_row + 1
-        tabFrame.content_fileter_label = customtkinter.CTkLabel(tabFrame, text="Content filter", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
-        tabFrame.content_fileter_label.grid(row=content_fileter_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=1)            
-        
-        tabFrame.content_fileter_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=0, height=20, activate_scrollbars= False )
-        tabFrame.content_fileter_textbox.grid(row=content_fileter_row, column=1, sticky="nsew",padx=5, pady=5, columnspan=3)              
-        tabFrame.content_fileter_textbox.insert("0.0", tabFrame._content_filter_text )      
 
-        #Price filter checkbox
-        price_filter_checkbox_row = content_fileter_row + 1 
+        # --- Content Filter ---
+        content_fileter_checkbox_clomand = lambda: self.content_fileter_checkbox_event(tabFrame)
+        tabFrame.content_checkBox = customtkinter.CTkCheckBox(tabFrame, text="Exclude Keywords (Content Filter)", command=content_fileter_checkbox_clomand, variable=tabFrame.content_fileter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL, fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        tabFrame.content_checkBox.grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 5))
+        
+        tabFrame.content_fileter_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=5, height=60, border_width=1, border_color="gray80", fg_color="white", text_color="black")
+        tabFrame.content_fileter_textbox.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 10))
+        tabFrame.content_fileter_textbox.insert("0.0", tabFrame._content_filter_text)
 
+        # --- Price Filter ---
         price_filter_checkbox_comand = lambda: self.price_filter_checkbox_event(tabFrame)
-        tabFrame.price_filter_checkbox = customtkinter.CTkCheckBox(tabFrame, text="Price filter", command=price_filter_checkbox_comand, variable=tabFrame.price_filter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL)
-        tabFrame.price_filter_checkbox.grid(row=price_filter_checkbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=2)         
+        tabFrame.price_filter_checkbox = customtkinter.CTkCheckBox(tabFrame, text="Price Range Filter", command=price_filter_checkbox_comand, variable=tabFrame.price_filter_checkbox_var, onvalue=customtkinter.ACTIVE, offvalue=customtkinter.NORMAL, fg_color=Constants.Colors.Primary, text_color=Constants.Colors.TextPrimary)
+        tabFrame.price_filter_checkbox.grid(row=5, column=0, columnspan=2, sticky="w", padx=10, pady=(10, 5))
 
-        #Price limit
-        price_limit_row = price_filter_checkbox_row + 1
-      
-        tabFrame.price_limit_from_label = customtkinter.CTkLabel(tabFrame, text="Price From", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
-        tabFrame.price_limit_from_label.grid(row=price_limit_row, column=0, sticky="nsew", padx=5, pady=5)            
+        price_limit_frame = customtkinter.CTkFrame(tabFrame, fg_color="transparent")
+        price_limit_frame.grid(row=6, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 10))
         
-        tabFrame.price_limit_from_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=0, height=20, activate_scrollbars= False, width=80)
-        tabFrame.price_limit_from_textbox.grid(row=price_limit_row, column=1, sticky="nsew",padx=5, pady=5)              
-        tabFrame.price_limit_from_textbox.insert("0.0", tabFrame._price_limit_from )
+        tabFrame.price_limit_from_label = customtkinter.CTkLabel(price_limit_frame, text="Min:", font=customtkinter.CTkFont(size=12), text_color=Constants.Colors.TextPrimary)
+        tabFrame.price_limit_from_label.pack(side="left", padx=(0, 5))
+        
+        tabFrame.price_limit_from_textbox = customtkinter.CTkTextbox(price_limit_frame, corner_radius=5, height=28, width=80, border_width=1, border_color="gray80", fg_color="white", text_color="black", activate_scrollbars=False)
+        tabFrame.price_limit_from_textbox.pack(side="left")
+        tabFrame.price_limit_from_textbox.insert("0.0", tabFrame._price_limit_from)
 
-        tabFrame.price_limit_to_label = customtkinter.CTkLabel(tabFrame, text="To", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"), width=20 )    
-        tabFrame.price_limit_to_label.grid(row=price_limit_row, column=2, sticky="nsew", padx=5, pady=5)    
+        tabFrame.price_limit_to_label = customtkinter.CTkLabel(price_limit_frame, text="Max:", font=customtkinter.CTkFont(size=12), text_color=Constants.Colors.TextPrimary)
+        tabFrame.price_limit_to_label.pack(side="left", padx=(15, 5))
+        
+        tabFrame.price_limit_to_textbox = customtkinter.CTkTextbox(price_limit_frame, corner_radius=5, height=28, width=80, border_width=1, border_color="gray80", fg_color="white", text_color="black", activate_scrollbars=False)
+        tabFrame.price_limit_to_textbox.pack(side="left")
+        tabFrame.price_limit_to_textbox.insert("0.0", tabFrame._price_limit_to)
 
-        tabFrame.price_limit_to_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=0, height=20, activate_scrollbars= False  )
-        tabFrame.price_limit_to_textbox.grid(row=price_limit_row, column=3, sticky="nsew",padx=5, pady=5)              
-        tabFrame.price_limit_to_textbox.insert("0.0", tabFrame._price_limit_to)  
-
-        #Delete button
-        delete_button_row = price_limit_row + 1 
-        tabFrame.price_limit_to_label = customtkinter.CTkLabel(tabFrame, text=tabFrame._guid, compound="left", height=20, font=customtkinter.CTkFont(size=8), text_color= "Grey", width=20 )    
-        tabFrame.price_limit_to_label.grid(row=delete_button_row, column=0, sticky="nsew", padx=5, pady=5)    
-
+        # --- Footer (Delete & ID) ---
+        footer_frame = customtkinter.CTkFrame(tabFrame, fg_color="transparent")
+        footer_frame.grid(row=7, column=0, columnspan=2, sticky="ew", padx=10, pady=20)
+        
+        tabFrame.guid_label = customtkinter.CTkLabel(footer_frame, text=f"ID: {tabFrame._guid}", font=customtkinter.CTkFont(size=10), text_color="gray60")
+        tabFrame.guid_label.pack(side="left")
 
         delete_button_command = lambda: self.delete_tab()
-        self.rootFrame.delete_button = customtkinter.CTkButton(tabFrame, text="Delete", width=30, height=20,  command=delete_button_command)
-        self.rootFrame.delete_button.grid(row=delete_button_row, column=1, sticky="nsew",padx=10, pady=10, columnspan=3)        
-
-        #Call all events to set filds config
+        self.rootFrame.delete_button = customtkinter.CTkButton(footer_frame, text="Delete Search", width=120, height=30, fg_color=Constants.Colors.TextError, hover_color="#c0392b", command=delete_button_command)
+        self.rootFrame.delete_button.pack(side="right")
+        
         self.content_fileter_checkbox_event(tabFrame)
         self.price_filter_checkbox_event(tabFrame)
-        print ("Tab with name: '" + tabFrame.master._current_name + "' created")                
                          
     def delete_tab(self):
-        tabName = self.rootFrame.tabview.get()
-        self.rootFrame.tabview.delete(tabName)
-        self.ctx.TempParameters.remove_dict(tabName)
-        print ("Tab deleted: "+ tabName)
+        def on_yes():
+            tabName = self.rootFrame.tabview.get()
+            self.rootFrame.tabview.delete(tabName)
+            self.ctx.TempParameters.remove_dict(tabName)
+            print ("Tab deleted: "+ tabName)
+            
+        ConfirmationDialog(title="Delete Search", text="Are you sure you want to delete this search tab?", on_yes=on_yes)
 
     def create_add_tab(self, tabFrame):
-
         tabFrame.grid_columnconfigure(0, weight=1)
-        tabFrame.columnconfigure(1, weight=0)
+        
+        center_frame = customtkinter.CTkFrame(tabFrame, fg_color="transparent")
+        center_frame.pack(expand=True, fill="both", padx=20, pady=20)
 
-        new_tab_textbox_row = 0
-        tabFrame.new_tab_textbox_label = customtkinter.CTkLabel(tabFrame, text="New search name", compound="left", height=20, font=customtkinter.CTkFont(size=12, weight="bold"))    
-        tabFrame.new_tab_textbox_label.grid(row=new_tab_textbox_row, column=0, sticky="nsew", padx=5, pady=5, columnspan=1)          
+        label = customtkinter.CTkLabel(center_frame, text="Create New Search Context", font=customtkinter.CTkFont(size=16, weight="bold"), text_color=Constants.Colors.TextPrimary)
+        label.pack(pady=(40, 10))
 
-        tabFrame.new_tab_textbox = customtkinter.CTkTextbox(tabFrame, corner_radius=0, height=20, activate_scrollbars= False, wrap="none" )
-        tabFrame.new_tab_textbox.grid(row=new_tab_textbox_row, column=1, sticky="nsew", padx=5, pady=5, columnspan=3)              
+        tabFrame.new_tab_textbox = customtkinter.CTkTextbox(center_frame, corner_radius=5, height=40, width=300, border_width=1, border_color="gray80", fg_color="white", text_color="black")
+        tabFrame.new_tab_textbox.pack(pady=10)
         tabFrame.new_tab_textbox.insert("0.0","")  
 
-        save_button_row = 1
         create_button_command = lambda: (self.create_new_tab())
-        tabFrame.create_button = customtkinter.CTkButton(tabFrame, text="Create", width=30, height=20,  command=create_button_command)
-        tabFrame.create_button.grid(row=save_button_row, column=0, sticky="nsew",padx=10, pady=10, columnspan=4)
+        tabFrame.create_button = customtkinter.CTkButton(center_frame, text="Create", width=150, height=40, fg_color=Constants.Colors.Primary, command=create_button_command)
+        tabFrame.create_button.pack(pady=20)
 
     def create_new_tab(self):          
         add_tab = self.rootFrame.tabview.tab("+")
         new_tab_name_raw = add_tab.new_tab_textbox.get("0.0", "end")
         new_tab_name = Helper.remove_newline_symbol(new_tab_name_raw)       
         if not new_tab_name.strip() != '':
-           add_tab.new_tab_textbox.configure(fg_color = Constants.Texts.Text_restricted_color)   
+           add_tab.new_tab_textbox.configure(border_color = Constants.Colors.TextError)   
            return
         else:
-            add_tab.new_tab_textbox.configure(fg_color = Constants.Texts.Text_normal_color)   
+            add_tab.new_tab_textbox.configure(border_color = "gray80")   
 
         add_tab.new_tab_textbox.delete("1.0", "end")  
         self.rootFrame.tabview.add(new_tab_name)          
@@ -163,26 +152,21 @@ class ParamTabView:
         if tab.price_filter_checkbox_var.get() == customtkinter.ACTIVE:
             if not (Helper.validate_int(tab.price_limit_from_textbox) and Helper.validate_int(tab.price_limit_to_textbox)):                    
                 all_prices_valid = False 
-                tab
         return all_prices_valid
    
     def content_fileter_checkbox_event(self, tabFrame):
         if tabFrame.content_fileter_checkbox_var.get() == customtkinter.ACTIVE:
-            tabFrame.content_fileter_textbox.configure(state = customtkinter.NORMAL, text_color= "White")   
-            print("content_fileter_checkbox_event: ", customtkinter.ACTIVE)
+            tabFrame.content_fileter_textbox.configure(state = customtkinter.NORMAL, fg_color="white", text_color="black")   
         else:
-            tabFrame.content_fileter_textbox.configure(state = customtkinter.DISABLED, text_color= "Grey") 
-            print("content_fileter_checkbox_event: ", customtkinter.NORMAL)
+            tabFrame.content_fileter_textbox.configure(state = customtkinter.DISABLED, fg_color="gray90", text_color="gray60") 
 
     def price_filter_checkbox_event(self, tabFrame):
         if tabFrame.price_filter_checkbox_var.get() == customtkinter.ACTIVE:
-            tabFrame.price_limit_from_textbox.configure(state = customtkinter.NORMAL, text_color= Constants.Texts.Text_enable_color)   
-            tabFrame.price_limit_to_textbox.configure(state = customtkinter.NORMAL, text_color= Constants.Texts.Text_enable_color)   
-            print("price_filter_checkbox_event: ", customtkinter.ACTIVE)
+            tabFrame.price_limit_from_textbox.configure(state = customtkinter.NORMAL, fg_color="white", text_color="black")   
+            tabFrame.price_limit_to_textbox.configure(state = customtkinter.NORMAL, fg_color="white", text_color="black")   
         else:
-            tabFrame.price_limit_from_textbox.configure(state = customtkinter.DISABLED, text_color= Constants.Texts.Text_disable_color) 
-            tabFrame.price_limit_to_textbox.configure(state = customtkinter.DISABLED, text_color= Constants.Texts.Text_disable_color) 
-            print("price_filter_checkbox_event: ", customtkinter.NORMAL)
+            tabFrame.price_limit_from_textbox.configure(state = customtkinter.DISABLED, fg_color="gray90", text_color="gray60") 
+            tabFrame.price_limit_to_textbox.configure(state = customtkinter.DISABLED, fg_color="gray90", text_color="gray60") 
 
     def save_fileds_to_dict(self, tab, tab_name):
         self.ctx.TempParameters.set_search_type(tab_name, tab.search_radio_button_var.get())

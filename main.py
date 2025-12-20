@@ -17,6 +17,8 @@ class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__()
+        customtkinter.set_appearance_mode("Light")
+        customtkinter.set_default_color_theme("green") 
         self.ctx = Context()  
         self.main_logic = Main_logic(self.ctx)
         self.mainFrame = MainView(self.ctx)
@@ -31,7 +33,7 @@ class App(customtkinter.CTk):
         self.current_frame = None
 
         self.title("Wallapop assistent")
-        self.geometry("1000x600")
+        self.geometry("1350x800")
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -56,12 +58,12 @@ class App(customtkinter.CTk):
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
         self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Home,
-                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                   fg_color="transparent", text_color=Constants.Colors.TextPrimary, hover_color=Constants.Colors.GrayHover,
                                                    image=self.home_image, anchor="w", command=self.home_button_event)
         self.home_button.grid(row=1, column=0, sticky="ew")
 
         self.settings_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=Constants.Frames.Settings,
-                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      fg_color="transparent", text_color=Constants.Colors.TextPrimary, hover_color=Constants.Colors.GrayHover,
                                                       image=self.chat_image, anchor="w", command=self.settings_button_event)
         self.settings_button.grid(row=2, column=0, sticky="ew")
 
@@ -84,8 +86,8 @@ class App(customtkinter.CTk):
 
     def select_frame_by_name(self, name):
 
-        self.home_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Home else "transparent")
-        self.settings_button.configure(fg_color=("gray75", "gray25") if name == Constants.Frames.Settings else "transparent")
+        self.home_button.configure(fg_color=Constants.Colors.GrayNormal if name == Constants.Frames.Home else "transparent")
+        self.settings_button.configure(fg_color=Constants.Colors.GrayNormal if name == Constants.Frames.Settings else "transparent")
 
         if self.current_frame == name:
             return
@@ -121,36 +123,63 @@ class App(customtkinter.CTk):
 
         
     def refresh_button_event(self):
+        # Thread-safe entry point for refresh (Manual or Auto)
         self.stop_event.set()  
-        self.refresh_button.configure(state = customtkinter.DISABLED, fg_color= Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text) 
-        self.update_idletasks()
-        new_content = self.main_logic.Download_content(True)
-        self.mainFrame.init(self.main_frame)
         
-        self.refresh_button.configure(state = customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
+        # Schedule UI disable on main thread
+        self.after(0, self._disable_refresh_button_ui)
+        
+        # Start download in a separate thread to avoid freezing UI
+        # (If called from timer thread, this spawns a worker. If from main, spawns a worker.)
+        threading.Thread(target=self._download_worker, daemon=True).start()
+
+    def _disable_refresh_button_ui(self):
+        self.refresh_button.configure(state=customtkinter.DISABLED, fg_color=Constants.Buttons.Button_disable_color, text=Constants.Buttons.Refresh_button_working_text)
+        self.update_idletasks()
+
+    def _download_worker(self):
+        # Background thread logic
+        try:
+            new_content = self.main_logic.Download_content(True)
+            # Schedule completion on main thread
+            self.after(0, lambda: self._finish_refresh(new_content))
+        except Exception as e:
+            print(f"Error in download worker: {e}")
+            # Ensure UI recovers even if download fails
+            self.after(0, lambda: self._finish_refresh([]))
+
+    def _finish_refresh(self, new_content):
+        # Main thread logic to update UI
+        self.mainFrame.init(self.main_frame)
+        self.refresh_button.configure(state=customtkinter.NORMAL, fg_color=Constants.Buttons.Button_enable_color, text=Constants.Buttons.Refresh_button_normal_text)
+        
         if self.ctx.MainParameters.get_auto_refresh_checkbox() == Constants.CheackBox_enabled_status:
+            # Restart the timer thread
             if not self.update_thread or not self.update_thread.is_alive():
                 self.stop_event.clear()
                 self.update_thread = threading.Thread(target=self.update_button_text, args=(self.refresh_button, self.stop_event), daemon=True)
                 self.update_thread.start()
             else:
-                self.stop_event.clear()
-        
+                 self.stop_event.clear()
+
         if self.ctx.MainParameters.get_notification_toastup_checkbox() == Constants.CheackBox_enabled_status:          
-            if any(new_content):
+            if new_content:
                 self.notification.SendNotification(new_content, self.ctx.MainParameters.get_notification_soundnote_checkbox() == Constants.CheackBox_enabled_status)   
         print("-Refresh action")
-        
+
     def update_button_text(self, button, stop_event):
         limit = int(self.ctx.MainParameters.get_refresh_time())
         count = limit
         while not stop_event.is_set():            
-            button.configure(text=f"Update in: {count}")
+            # Safe UI update via after
+            self.after(0, lambda c=count: button.configure(text=f"Update in: {c}"))
             count -= 1
             time.sleep(1)  
             if count == 0:
+                # Trigger refresh - this will stop the current thread via stop_event.set() inside refresh_button_event
+                # but we should break here to be clean.
                 self.refresh_button_event()
-                count = limit
+                break # Refresh starts a new logic flow/thread, so we exit this one.
     
 if __name__ == "__main__":
     app = App()

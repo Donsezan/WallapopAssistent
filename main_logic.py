@@ -52,10 +52,10 @@ class Main_logic:
                     self.file_services_instance.Save_content_to_file(final_content, Constants.History_file_name(data._searchGuid))
                     merged_content = self.file_services_instance.Merge_content(self.ctx.MainParameters.get_content(key), final_content)
                     self.ctx.MainParameters.set_content(key, Helper.sort_content_by_date(merged_content, reversed = True))
-                    changing_exist.append(diff_in_content)
+                    changing_exist.extend(diff_in_content)
             self.ctx.set_updated_paramter_status(False) 
 
-        if any(changing_exist):
+        if changing_exist:
             all_content = self.ctx.MainParameters.get_all_content()       
             self.file_services_instance.Delete_old_images(all_content)
 
@@ -63,7 +63,7 @@ class Main_logic:
         if len(self.ctx.MainParameters.get_dict()) != 0:            
             uuids = [obj._searchGuid for obj in self.ctx.MainParameters.get_dict().values()]
         self.file_services_instance.Delete_old_historys(uuids)
-        return any(changing_exist)
+        return changing_exist
 
     def _filterContent(self, contents, key):
 
